@@ -207,11 +207,11 @@
   .hero-headline .jp {
     font-family: 'Noto Serif JP', serif;
     font-weight: 200;
-    font-size: 0.55em;
+    font-size: 0.42em;
     color: var(--stone);
     display: block;
-    letter-spacing: 0.2em;
-    margin-bottom: 0.2em;
+    letter-spacing: 0.35em;
+    margin-bottom: 0.3em;
   }
 
   .hero-sub {
@@ -274,13 +274,14 @@
 
   .hero-right {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .hero-img-wrap {
     position: absolute;
     inset: 0;
     clip-path: polygon(8% 0%, 100% 0%, 100% 100%, 0% 100%);
+    overflow: hidden;
     opacity: 0;
     animation: fadeIn 1.2s ease 0.2s forwards;
   }
@@ -294,19 +295,20 @@
 
   .hero-float-badge {
     position: absolute;
-    bottom: 6rem;
-    left: -2rem;
-    width: 110px;
-    height: 110px;
+    bottom: 5rem;
+    left: -1.5rem;
+    width: 100px;
+    height: 100px;
     background: var(--sand);
     border: 1px solid var(--stone);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 3;
+    z-index: 4;
     opacity: 0;
     animation: fadeIn 1s ease 1.2s forwards;
+    overflow: visible;
   }
   .hero-float-badge .big { 
     font-family: 'Cormorant Garamond', serif;
@@ -329,13 +331,15 @@
   .scroll-line {
     position: absolute;
     bottom: 3rem;
-    left: 4rem;
+    left: 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
     opacity: 0;
     animation: fadeIn 1s ease 1.5s forwards;
+    z-index: 1;
+    pointer-events: none;
   }
   .scroll-line span {
     font-size: 0.6rem;
@@ -1494,7 +1498,7 @@
       <span>Quiromasajes · Mutxamel, Alicante</span>
     </div>
     <h1 class="hero-headline">
-      <span class="jp">蓮 · Hasu · Quiromasajes</span>
+      <span class="jp">蓮 &nbsp; Hasu &nbsp; Quiromasajes</span>
       El arte de<br><em>sanar</em><br>con las manos
     </h1>
     <p class="hero-sub">
