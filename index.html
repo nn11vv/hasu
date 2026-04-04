@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasu · Masajes Terapéuticos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --cream: #FDF6F9;
+    --sand: #F5E8EF;
+    --stone: #D9AECB;
+    --moss: #9B6B9B;
+    --moss-light: #BF8FBF;
+    --bark: #2E1A2E;
+    --bark-soft: #5C3D5C;
+    --terracotta: #C97A9B;
+    --water: #A89DC8;
+    --white: #FFFAFD;
+    --ink: #1A0F1A;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    background: var(--cream);
+    color: var(--bark);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--moss);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, background 0.3s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid var(--moss);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.35s ease, width 0.3s, height 0.3s, opacity 0.3s;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+  }
+  .cursor-ring.hovering { width: 48px; height: 48px; opacity: 0.3; }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 4rem;
+    transition: background 0.4s, backdrop-filter 0.4s;
+  }
+  nav.scrolled {
+    background: rgba(245, 239, 228, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196, 180, 154, 0.3);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    text-decoration: none;
+  }
+  .nav-logo-kanji {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 200;
+    font-size: 1.4rem;
+    color: var(--moss);
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .nav-logo-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 1.5rem;
+    letter-spacing: 0.25em;
+    color: var(--bark);
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bark-soft);
+    position: relative;
+    transition: color 0.3s;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -3px; left: 0;
+    width: 0; height: 1px;
+    background: var(--moss);
+    transition: width 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--moss); }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-cta {
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white) !important;
+    background: var(--moss);
+    padding: 0.65rem 1.6rem;
+    text-decoration: none;
+    transition: background 0.3s, transform 0.2s !important;
+  }
+  .nav-hamburger { display: none; background: none; border: none; padding: 4px; cursor: pointer; }
+  .nav-cta::after { display: none !important; }
+  .nav-cta:hover { background: var(--bark) !important; transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8rem 4rem 6rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-tag {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+  .hero-tag span {
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--moss);
+  }
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--moss);
+  }
+
+  .hero-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 6vw, 6.5rem);
+    line-height: 0.95;
+    color: var(--bark);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.5s forwards;
+  }
+  .hero-headline em {
+    font-style: italic;
+    color: var(--moss);
+  }
+  .hero-headline .jp {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 200;
+    font-size: 0.55em;
+    color: var(--stone);
+    display: block;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.2em;
+  }
+
+  .hero-sub {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--bark-soft);
+    max-width: 380px;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.7s forwards;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 0.9s forwards;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--bark);
+    color: var(--cream);
+    text-decoration: none;
+    padding: 1rem 2.2rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    transition: background 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--moss);
+    transform: translateX(-100%);
+    transition: transform 0.35s ease;
+  }
+  .btn-primary:hover::after { transform: translateX(0); }
+  .btn-primary span { position: relative; z-index: 1; }
+  .btn-primary svg { position: relative; z-index: 1; transition: transform 0.3s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-ghost {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bark-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--stone);
+    padding-bottom: 2px;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--moss); border-color: var(--moss); }
+
+  .hero-right {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-img-wrap {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(8% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity: 0;
+    animation: fadeIn 1.2s ease 0.2s forwards;
+  }
+
+  /* SVG-based hero image — organic spa atmosphere */
+  .hero-svg-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-float-badge {
+    position: absolute;
+    bottom: 6rem;
+    left: -2rem;
+    width: 110px;
+    height: 110px;
+    background: var(--sand);
+    border: 1px solid var(--stone);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.2s forwards;
+  }
+  .hero-float-badge .big { 
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--moss);
+    line-height: 1;
+  }
+  .hero-float-badge .small {
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--bark-soft);
+    text-align: center;
+    line-height: 1.4;
+    margin-top: 0.2rem;
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-line {
+    position: absolute;
+    bottom: 3rem;
+    left: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  .scroll-line span {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    writing-mode: vertical-rl;
+  }
+  .scroll-line::after {
+    content: '';
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--stone), transparent);
+    animation: scrollDown 2s ease-in-out infinite;
+  }
+
+  /* DIVIDER ELEMENT */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .section-divider::before {
+    content: '';
+    display: block;
+    width: 2px;
+    height: 40px;
+    background: var(--moss);
+  }
+  .section-divider span {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--moss);
+  }
+
+  /* ABOUT SECTION */
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 80vh;
+    position: relative;
+  }
+
+  .about-visual {
+    position: relative;
+    background: var(--bark);
+    overflow: hidden;
+    min-height: 500px;
+  }
+
+  .about-visual svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
+
+  .about-content {
+    padding: 8rem 5rem 8rem 6rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(2.5rem, 4vw, 4rem);
+    line-height: 1.1;
+    color: var(--bark);
+    margin-bottom: 2rem;
+  }
+  .section-title em { font-style: italic; color: var(--moss); }
+
+  .about-text {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: var(--bark-soft);
+    margin-bottom: 1.5rem;
+    max-width: 440px;
+  }
+
+  .about-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 3rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--sand);
+  }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem;
+    font-weight: 300;
+    color: var(--moss);
+    line-height: 1;
+    display: block;
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-top: 0.3rem;
+    display: block;
+  }
+
+  /* SERVICES */
+  .services {
+    padding: 8rem 4rem;
+    background: var(--white);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .services::before {
+    content: '蓮';
+    font-family: 'Noto Serif JP', serif;
+    font-size: 28rem;
+    color: var(--sand);
+    position: absolute;
+    right: -4rem;
+    top: -4rem;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+
+  .services-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .service-card {
+    background: var(--cream);
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+    cursor: none;
+  }
+  .service-card:hover { background: var(--moss); }
+  .service-card:hover .service-num,
+  .service-card:hover .service-name,
+  .service-card:hover .service-desc,
+  .service-card:hover .service-price { color: var(--cream); }
+  .service-card:hover .service-line { background: rgba(245,239,228,0.3); }
+  .service-card:hover .service-duration { color: rgba(245,239,228,0.6); }
+
+  .service-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--stone);
+    margin-bottom: 2rem;
+    transition: color 0.4s;
+  }
+
+  .service-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+  }
+  .service-card:hover .service-icon { opacity: 1; filter: brightness(20) sepia(1) hue-rotate(300deg); }
+
+  .service-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    color: var(--bark);
+    margin-bottom: 0.5rem;
+    transition: color 0.4s;
+  }
+
+  .service-line {
+    width: 40px;
+    height: 1px;
+    background: var(--stone);
+    margin: 1rem 0;
+    transition: background 0.4s;
+  }
+
+  .service-desc {
+    font-size: 0.85rem;
+    line-height: 1.75;
+    color: var(--bark-soft);
+    margin-bottom: 2rem;
+    transition: color 0.4s;
+  }
+
+  .service-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .service-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--bark);
+    transition: color 0.4s;
+  }
+
+  .service-duration {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--stone);
+    transition: color 0.4s;
+  }
+
+  /* BENEFITS */
+  .benefits {
+    padding: 8rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8rem;
+    align-items: center;
+  }
+
+  .benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .benefit-item {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--sand);
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .benefit-item.visible { opacity: 1; transform: translateX(0); }
+  .benefit-item:last-child { border-bottom: none; }
+
+  .benefit-num-wrap {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--stone);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .benefit-num-wrap span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--moss);
+  }
+
+  .benefit-text h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--bark);
+    margin-bottom: 0.4rem;
+  }
+  .benefit-text p {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--bark-soft);
+  }
+
+  /* TESTIMONIALS */
+  .testimonials {
+    background: var(--bark);
+    padding: 8rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .testimonials::before {
+    content: '"';
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30rem;
+    color: rgba(255,255,255,0.03);
+    position: absolute;
+    top: -6rem;
+    left: 2rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .testimonials .section-title { color: var(--cream); }
+  .testimonials .section-divider::before { background: var(--moss-light); }
+  .testimonials .section-divider span { color: var(--moss-light); }
+
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 4rem;
+  }
+
+  .testimonial-card {
+    background: rgba(255,255,255,0.04);
+    padding: 3rem;
+    border-top: 2px solid var(--moss);
+    position: relative;
+    transition: background 0.3s;
+  }
+  .testimonial-card:hover { background: rgba(255,255,255,0.07); }
+
+  .testimonial-stars {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 1.5rem;
+  }
+  .star { color: var(--terracotta); font-size: 0.8rem; }
+
+  .testimonial-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: rgba(253, 240, 248, 0.85);
+    margin-bottom: 2rem;
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .author-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--moss);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--cream);
+  }
+  .author-name {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--stone);
+    display: block;
+  }
+  .author-source {
+    font-size: 0.65rem;
+    color: rgba(253,240,248,0.3);
+    display: block;
+    margin-top: 0.15rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* BOOKING SECTION */
+  .booking {
+    padding: 8rem 4rem;
+    background: var(--cream);
+    position: relative;
+  }
+
+  .booking-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .booking-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .booking-header .section-divider {
+    justify-content: center;
+  }
+  .booking-header .section-title {
+    font-size: clamp(2.5rem, 4vw, 4rem);
+  }
+
+  .booking-form-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 4rem;
+    background: var(--white);
+    padding: 3rem;
+    box-shadow: 0 4px 40px rgba(60, 46, 30, 0.07);
+  }
+
+  /* CALENDAR */
+  .calendar-wrap h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--bark);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .calendar {
+    border: 1px solid var(--sand);
+    padding: 1.5rem;
+  }
+
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  .cal-month {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    color: var(--bark);
+  }
+  .cal-nav {
+    background: none;
+    border: 1px solid var(--sand);
+    width: 30px; height: 30px;
+    cursor: none;
+    color: var(--bark-soft);
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-nav:hover { background: var(--moss); color: var(--white); border-color: var(--moss); }
+
+  .cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  .cal-day-name {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--stone);
+    padding: 0.3rem 0;
+  }
+
+  .cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--bark-soft);
+    cursor: none;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+  }
+  .cal-day:not(.empty):not(.past):hover { background: var(--sand); }
+  .cal-day.available:not(.past) { cursor: none; }
+  .cal-day.available:not(.past):hover { background: var(--moss); color: var(--white); }
+  .cal-day.selected { background: var(--moss) !important; color: var(--white) !important; }
+  .cal-day.today { font-weight: 400; color: var(--moss); }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { opacity: 0.3; cursor: default; }
+  .cal-day.has-dot::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 4px; height: 4px;
+    background: var(--terracotta);
+    border-radius: 50%;
+  }
+
+  /* TIME SLOTS */
+  .time-slots-wrap {
+    margin-top: 1.5rem;
+  }
+  .time-slots-wrap h4 {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 0.8rem;
+  }
+  .time-slots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+  .time-slot {
+    padding: 0.5rem 0.3rem;
+    border: 1px solid var(--sand);
+    font-size: 0.78rem;
+    color: var(--bark-soft);
+    text-align: center;
+    cursor: none;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    background: none;
+    font-family: inherit;
+  }
+  .time-slot:hover { background: var(--sand); border-color: var(--stone); }
+  .time-slot.selected { background: var(--moss); color: var(--white); border-color: var(--moss); }
+  .time-slot.booked { opacity: 0.3; cursor: default; text-decoration: line-through; }
+
+  /* FORM FIELDS */
+  .booking-fields h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--bark);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  .form-label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 0.4rem;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--sand);
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--bark);
+    outline: none;
+    transition: border-color 0.3s, background 0.3s;
+    cursor: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--moss);
+    background: var(--white);
+  }
+
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '↓';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--stone);
+    pointer-events: none;
+    font-size: 0.75rem;
+  }
+
+  .booking-summary {
+    background: var(--cream);
+    border: 1px solid var(--sand);
+    padding: 1.2rem;
+    margin: 1.5rem 0;
+    font-size: 0.82rem;
+    color: var(--bark-soft);
+    line-height: 1.8;
+    display: none;
+  }
+  .booking-summary.visible { display: block; }
+  .booking-summary strong { color: var(--bark); font-weight: 400; }
+
+  .btn-book {
+    width: 100%;
+    padding: 1rem;
+    background: var(--bark);
+    color: var(--cream);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: background 0.3s;
+    margin-top: 0.5rem;
+  }
+  .btn-book:hover { background: var(--moss); }
+
+  .booking-note {
+    font-size: 0.72rem;
+    color: var(--stone);
+    text-align: center;
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+
+  /* SUCCESS STATE */
+  .booking-success {
+    display: none;
+    text-align: center;
+    padding: 3rem;
+    background: var(--white);
+  }
+  .booking-success.visible { display: block; }
+  .booking-success .check-circle {
+    width: 64px;
+    height: 64px;
+    border: 2px solid var(--moss);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 1.5rem;
+    color: var(--moss);
+  }
+  .booking-success h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--bark);
+    margin-bottom: 0.8rem;
+  }
+  .booking-success p {
+    font-size: 0.85rem;
+    color: var(--bark-soft);
+    line-height: 1.7;
+  }
+
+  /* FAQ */
+  .faq {
+    padding: 8rem 4rem;
+    background: var(--sand);
+  }
+  .faq-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--stone);
+  }
+  .faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: none;
+    text-align: left;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--bark);
+    transition: color 0.3s;
+  }
+  .faq-question:hover { color: var(--moss); }
+  .faq-icon {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--stone);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    transition: transform 0.3s, background 0.3s, color 0.3s;
+    color: var(--bark-soft);
+  }
+  .faq-item.open .faq-icon { transform: rotate(45deg); background: var(--moss); color: var(--cream); border-color: var(--moss); }
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s;
+  }
+  .faq-item.open .faq-answer { max-height: 200px; padding-bottom: 1.5rem; }
+  .faq-answer p {
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--bark-soft);
+  }
+
+  /* CONTACT STRIP */
+  .contact-strip {
+    background: var(--moss);
+    padding: 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .contact-strip-text h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+  }
+  .contact-strip-text p {
+    font-size: 0.85rem;
+    color: rgba(245, 239, 228, 0.7);
+  }
+
+  .contact-strip-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--cream);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid rgba(253,240,248,0.4);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .contact-link:hover { background: rgba(255,255,255,0.1); border-color: var(--cream); }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    padding: 4rem;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 4rem;
+  }
+
+  .footer-brand {}
+  .footer-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .footer-logo .kanji {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 200;
+    font-size: 1.4rem;
+    color: var(--moss-light);
+    opacity: 0.8;
+  }
+  .footer-logo .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--cream);
+  }
+  .footer-tagline {
+    font-size: 0.78rem;
+    color: rgba(253,240,248,0.4);
+    line-height: 1.8;
+    max-width: 260px;
+    margin-bottom: 1.5rem;
+  }
+  .footer-social {
+    display: flex;
+    gap: 0.8rem;
+  }
+  .social-link {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(253,240,248,0.5);
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: border-color 0.3s, color 0.3s, background 0.3s;
+  }
+  .social-link:hover { border-color: var(--moss-light); color: var(--moss-light); }
+
+  .footer-col h4 {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 1.2rem;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 0.7rem; }
+  .footer-col a {
+    text-decoration: none;
+    font-size: 0.82rem;
+    color: rgba(253,240,248,0.5);
+    transition: color 0.3s;
+  }
+  .footer-col a:hover { color: var(--cream); }
+
+  .footer-bottom {
+    background: var(--ink);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 1.2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-bottom span {
+    font-size: 0.7rem;
+    color: rgba(253,240,248,0.25);
+    letter-spacing: 0.05em;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scrollDown {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* =====================
+     RESPONSIVE MÓVIL
+  ===================== */
+
+  /* Tablet */
+  @media (max-width: 1100px) {
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 1.2rem 2rem; }
+    .hero-left { padding: 7rem 3rem 4rem; }
+    .about-content { padding: 5rem 3rem; }
+  }
+
+  /* Móvil */
+  @media (max-width: 768px) {
+    html { font-size: 15px; }
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+    .scroll-line { display: none; }
+
+    /* NAV — hamburger */
+    nav { padding: 1rem 1.2rem; }
+    .nav-links { display: none; }
+    .nav-links.open {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0;
+      background: rgba(253,246,249,0.97);
+      backdrop-filter: blur(16px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+    .nav-links.open a {
+      font-size: 1.4rem;
+      letter-spacing: 0.2em;
+    }
+    .nav-links.open .nav-cta {
+      padding: 0.9rem 2.5rem;
+      font-size: 0.85rem;
+    }
+    .nav-hamburger {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      z-index: 201;
+      padding: 4px;
+    }
+    .nav-hamburger span {
+      display: block;
+      width: 24px;
+      height: 1.5px;
+      background: var(--bark);
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+    .nav-close-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 199;
+      display: none;
+    }
+    .nav-close-overlay.open { display: block; }
+
+    /* HERO */
+    .hero { grid-template-columns: 1fr; min-height: auto; }
+    .hero-left {
+      padding: 6rem 1.2rem 2.5rem;
+      order: 1;
+    }
+    .hero-right {
+      order: 2;
+      height: 55vw;
+      min-height: 220px;
+    }
+    .hero-img-wrap { clip-path: none; }
+    .hero-headline { font-size: clamp(2.8rem, 10vw, 4rem); }
+    .hero-headline .jp { font-size: 0.8rem; letter-spacing: 0.15em; }
+    .hero-sub { font-size: 0.88rem; max-width: 100%; }
+    .hero-actions { flex-direction: column; align-items: flex-start; gap: 1.2rem; }
+    .btn-primary { width: 100%; justify-content: center; padding: 1rem; }
+    .hero-float-badge { width: 90px; height: 90px; left: 0.8rem; bottom: 2rem; }
+    .hero-float-badge .big { font-size: 1.5rem; }
+    .lotus-hero-deco { right: 0.5rem; bottom: 1rem; }
+    .lotus-hero-deco svg { width: 80px; height: 70px; }
+
+    /* ABOUT */
+    .about { grid-template-columns: 1fr; }
+    .about-visual { min-height: 220px; order: 1; }
+    .about-content { padding: 2.5rem 1.2rem; order: 2; }
+    .section-title { font-size: clamp(2rem, 7vw, 3rem); }
+    .about-stats { gap: 1.5rem; flex-wrap: wrap; }
+    .stat-num { font-size: 2.2rem; }
+
+    /* SERVICES */
+    .services { padding: 3rem 1.2rem; }
+    .services::before { font-size: 14rem; right: -2rem; top: -2rem; }
+    .services-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .services-grid { grid-template-columns: 1fr; gap: 2px; }
+    .service-card { padding: 2rem 1.5rem; }
+
+    /* BENEFITS */
+    .benefits { grid-template-columns: 1fr; padding: 3rem 1.2rem; gap: 2rem; }
+
+    /* TESTIMONIALS */
+    .testimonials { padding: 3rem 1.2rem; }
+    .testimonials-grid { grid-template-columns: 1fr; gap: 2px; }
+    .testimonial-card { padding: 2rem 1.5rem; }
+
+    /* BOOKING */
+    .booking { padding: 3rem 1.2rem; }
+    .booking-form-wrap { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
+    .time-slots { grid-template-columns: repeat(4, 1fr); }
+    .cal-day { font-size: 0.75rem; }
+
+    /* FAQ */
+    .faq { padding: 3rem 1.2rem; }
+    .faq-question { font-size: 1rem; }
+
+    /* CONTACT STRIP */
+    .contact-strip {
+      flex-direction: column;
+      gap: 1.5rem;
+      text-align: center;
+      padding: 2.5rem 1.2rem;
+    }
+    .contact-strip-text h2 { font-size: 1.6rem; }
+    .contact-strip-links { flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
+    .contact-link { font-size: 0.72rem; padding: 0.6rem 1rem; }
+
+    /* FOOTER */
+    footer { grid-template-columns: 1fr; padding: 2.5rem 1.2rem; gap: 1.5rem; }
+    .footer-bottom { padding: 1rem 1.2rem; flex-direction: column; gap: 0.4rem; text-align: center; }
+  }
+
+  /* Móvil pequeño */
+  @media (max-width: 400px) {
+    .hero-headline { font-size: clamp(2.4rem, 11vw, 3rem); }
+    .services-grid { grid-template-columns: 1fr; }
+    .time-slots { grid-template-columns: repeat(3, 1fr); }
+    .booking-form-wrap { padding: 1.2rem; }
+  }
+
+  /* lotus-logo removido — kanji en su lugar */
+  /* =====================
+     LOTO ANIMADO
+  ===================== */
+  .lotus-float {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Pétalos que se abren desde cerrado */
+  @keyframes petalOpenL1 {
+    0%   { transform: rotate(-72deg) translateY(0px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: rotate(-72deg) translateY(-12px); opacity: 1; }
+  }
+  @keyframes petalOpenL2 {
+    0%   { transform: rotate(-36deg) translateY(0px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: rotate(-36deg) translateY(-10px); opacity: 1; }
+  }
+  @keyframes petalOpenC {
+    0%   { transform: rotate(0deg) translateY(0px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: rotate(0deg) translateY(-9px); opacity: 1; }
+  }
+  @keyframes petalOpenR2 {
+    0%   { transform: rotate(36deg) translateY(0px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: rotate(36deg) translateY(-10px); opacity: 1; }
+  }
+  @keyframes petalOpenR1 {
+    0%   { transform: rotate(72deg) translateY(0px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: rotate(72deg) translateY(-12px); opacity: 1; }
+  }
+  @keyframes petalOpenBackL {
+    0%   { transform: rotate(-54deg) translateY(0px); opacity: 0; }
+    40%  { opacity: 0.6; }
+    100% { transform: rotate(-54deg) translateY(-16px); opacity: 0.5; }
+  }
+  @keyframes petalOpenBackR {
+    0%   { transform: rotate(54deg) translateY(0px); opacity: 0; }
+    40%  { opacity: 0.6; }
+    100% { transform: rotate(54deg) translateY(-16px); opacity: 0.5; }
+  }
+  @keyframes petalOpenBackC {
+    0%   { transform: rotate(0deg) translateY(0px); opacity: 0; }
+    40%  { opacity: 0.5; }
+    100% { transform: rotate(0deg) translateY(-18px); opacity: 0.4; }
+  }
+
+  /* Flotación suave del loto completo */
+  @keyframes lotusFloat {
+    0%, 100% { transform: translateY(0px) rotate(-2deg); }
+    50%       { transform: translateY(-14px) rotate(2deg); }
+  }
+  /* Ondas en el agua */
+  @keyframes waterRipple {
+    0%, 100% { transform: scaleX(1); opacity: 0.4; }
+    50%       { transform: scaleX(1.15); opacity: 0.2; }
+  }
+  @keyframes waterRipple2 {
+    0%, 100% { transform: scaleX(1); opacity: 0.25; }
+    50%       { transform: scaleX(0.88); opacity: 0.15; }
+  }
+
+  /* Centro del loto pulsa suavemente */
+  @keyframes lotusCenter {
+    0%, 100% { r: 6; opacity: 0.9; }
+    50%       { r: 7; opacity: 1; }
+  }
+
+  .lotus-svg .lp-back-l  { transform-origin: 50% 80%; animation: petalOpenBackL 1.8s cubic-bezier(.34,1.56,.64,1) 0.2s both; }
+  .lotus-svg .lp-back-r  { transform-origin: 50% 80%; animation: petalOpenBackR 1.8s cubic-bezier(.34,1.56,.64,1) 0.2s both; }
+  .lotus-svg .lp-back-c  { transform-origin: 50% 80%; animation: petalOpenBackC 2s cubic-bezier(.34,1.56,.64,1) 0s both; }
+  .lotus-svg .lp-l1      { transform-origin: 50% 80%; animation: petalOpenL1 1.6s cubic-bezier(.34,1.56,.64,1) 0.5s both; }
+  .lotus-svg .lp-l2      { transform-origin: 50% 80%; animation: petalOpenL2 1.6s cubic-bezier(.34,1.56,.64,1) 0.65s both; }
+  .lotus-svg .lp-c       { transform-origin: 50% 80%; animation: petalOpenC  1.6s cubic-bezier(.34,1.56,.64,1) 0.8s both; }
+  .lotus-svg .lp-r2      { transform-origin: 50% 80%; animation: petalOpenR2 1.6s cubic-bezier(.34,1.56,.64,1) 0.65s both; }
+  .lotus-svg .lp-r1      { transform-origin: 50% 80%; animation: petalOpenR1 1.6s cubic-bezier(.34,1.56,.64,1) 0.5s both; }
+  .lotus-svg .lw1        { transform-origin: 50% 50%; animation: waterRipple  3s ease-in-out 1.5s infinite; }
+  .lotus-svg .lw2        { transform-origin: 50% 50%; animation: waterRipple2 3s ease-in-out 2s   infinite; }
+  .lotus-float-wrap      { animation: lotusFloat 6s ease-in-out 2s infinite; }
+
+  /* Loto hero — posición fija decorativa */
+  .lotus-hero-deco {
+    position: absolute;
+    bottom: 3rem;
+    right: 3rem;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.8s forwards;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* Loto section divider — centrado decorativo */
+  .lotus-section-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- LOTO SVG REUTILIZABLE (template oculto) -->
+<svg style="display:none" id="lotusDef">
+  <symbol id="lotus-symbol" viewBox="0 0 120 100">
+    <!-- Tallo -->
+    <line x1="60" y1="78" x2="60" y2="95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <!-- Hojas -->
+    <ellipse cx="45" cy="88" rx="12" ry="5" fill="currentColor" opacity="0.3" transform="rotate(-20 45 88)"/>
+    <ellipse cx="75" cy="88" rx="12" ry="5" fill="currentColor" opacity="0.3" transform="rotate(20 75 88)"/>
+    <!-- Ondas agua -->
+    <ellipse class="lw1" cx="60" cy="82" rx="26" ry="4" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+    <ellipse class="lw2" cx="60" cy="82" rx="18" ry="2.5" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.25"/>
+    <!-- Pétalos traseros (más claros, más abiertos) -->
+    <ellipse class="lp-back-l" cx="60" cy="78" rx="7" ry="22" fill="currentColor" opacity="0.25"/>
+    <ellipse class="lp-back-r" cx="60" cy="78" rx="7" ry="22" fill="currentColor" opacity="0.25"/>
+    <ellipse class="lp-back-c" cx="60" cy="78" rx="6" ry="24" fill="currentColor" opacity="0.2"/>
+    <!-- Pétalos frontales (5 principales) -->
+    <ellipse class="lp-l1"  cx="60" cy="76" rx="8"   ry="20" fill="currentColor" opacity="0.7"/>
+    <ellipse class="lp-l2"  cx="60" cy="75" rx="8.5" ry="21" fill="currentColor" opacity="0.85"/>
+    <ellipse class="lp-c"   cx="60" cy="74" rx="9"   ry="22" fill="currentColor" opacity="1"/>
+    <ellipse class="lp-r2"  cx="60" cy="75" rx="8.5" ry="21" fill="currentColor" opacity="0.85"/>
+    <ellipse class="lp-r1"  cx="60" cy="76" rx="8"   ry="20" fill="currentColor" opacity="0.7"/>
+    <!-- Centro / pistilo -->
+    <circle cx="60" cy="60" r="6" fill="currentColor" opacity="0.9"/>
+    <circle cx="60" cy="60" r="3" fill="white" opacity="0.7"/>
+  </symbol>
+</svg>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">
+    <span class="nav-logo-kanji">蓮</span>
+    <span class="nav-logo-text">Hasu</span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#servicios" onclick="closeNav()">Servicios</a></li>
+    <li><a href="#sobre-mi" onclick="closeNav()">Sobre mí</a></li>
+    <li><a href="#testimonios" onclick="closeNav()">Testimonios</a></li>
+    <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
+    <li><a href="#reservar" class="nav-cta" onclick="closeNav()">Reservar cita</a></li>
+  </ul>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menú" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-close-overlay" id="navOverlay" onclick="closeNav()"></div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">
+      <span>Quiromasajes · Mutxamel, Alicante</span>
+    </div>
+    <h1 class="hero-headline">
+      <span class="jp">蓮 · Hasu · Quiromasajes</span>
+      El arte de<br><em>sanar</em><br>con las manos
+    </h1>
+    <p class="hero-sub">
+      Cecilia te da la bienvenida a un espacio pensado para reconectar cuerpo y mente. Atención cercana, totalmente personalizada según tus necesidades.
+    </p>
+    <div class="hero-actions">
+      <a href="#reservar" class="btn-primary">
+        <span>Reservar cita sesión</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#servicios" class="btn-ghost">Ver servicios</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-img-wrap">
+      <!-- Organic spa illustration -->
+      <svg viewBox="0 0 700 900" xmlns="http://www.w3.org/2000/svg" class="hero-svg-bg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id="heroGrad" cx="40%" cy="55%" r="85%">
+            <stop offset="0%" stop-color="#7B4F8A" stop-opacity="0.95"/>
+            <stop offset="60%" stop-color="#4A2060"/>
+            <stop offset="100%" stop-color="#1A0A2E"/>
+          </radialGradient>
+          <radialGradient id="glowPink" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#E8A0C0" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#E8A0C0" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="blur1"><feGaussianBlur stdDeviation="12"/></filter>
+          <filter id="blur2"><feGaussianBlur stdDeviation="6"/></filter>
+        </defs>
+        <rect width="700" height="900" fill="url(#heroGrad)"/>
+        <!-- Soft glow blobs -->
+        <ellipse cx="500" cy="200" rx="250" ry="200" fill="rgba(201,122,175,0.12)" filter="url(#blur1)"/>
+        <ellipse cx="150" cy="700" rx="200" ry="180" fill="rgba(168,140,210,0.1)" filter="url(#blur1)"/>
+        <!-- Concentric circles -->
+        <circle cx="350" cy="470" r="300" fill="none" stroke="rgba(253,240,248,0.06)" stroke-width="1"/>
+        <circle cx="350" cy="470" r="220" fill="none" stroke="rgba(253,240,248,0.05)" stroke-width="1"/>
+        <circle cx="350" cy="470" r="140" fill="none" stroke="rgba(253,240,248,0.08)" stroke-width="1"/>
+        <!-- Sakura petals -->
+        <g transform="translate(350, 470)" opacity="0.2">
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(0)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(45)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(90)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(135)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(180)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(225)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(270)"/>
+          <ellipse cx="0" cy="-95" rx="28" ry="65" fill="#FDE8F0" transform="rotate(315)"/>
+        </g>
+        <circle cx="350" cy="470" r="38" fill="#E8A0C0" opacity="0.25"/>
+        <circle cx="350" cy="470" r="20" fill="#FDF6F9" opacity="0.3"/>
+        <!-- Floating petals scattered -->
+        <ellipse cx="140" cy="140" rx="10" ry="17" fill="rgba(253,232,240,0.18)" transform="rotate(-30,140,140)"/>
+        <ellipse cx="560" cy="220" rx="8" ry="14" fill="rgba(253,232,240,0.14)" transform="rotate(22,560,220)"/>
+        <ellipse cx="100" cy="550" rx="11" ry="19" fill="rgba(253,232,240,0.12)" transform="rotate(10,100,550)"/>
+        <ellipse cx="620" cy="650" rx="9" ry="15" fill="rgba(253,232,240,0.15)" transform="rotate(-15,620,650)"/>
+        <ellipse cx="250" cy="800" rx="7" ry="12" fill="rgba(168,140,210,0.18)" transform="rotate(5,250,800)"/>
+        <ellipse cx="480" cy="780" rx="10" ry="16" fill="rgba(253,232,240,0.1)" transform="rotate(-20,480,780)"/>
+        <!-- Vertical accent lines -->
+        <line x1="100" y1="0" x2="100" y2="900" stroke="rgba(253,240,248,0.04)" stroke-width="1"/>
+        <line x1="600" y1="0" x2="600" y2="900" stroke="rgba(253,240,248,0.04)" stroke-width="1"/>
+        <!-- Water ripples at bottom -->
+        <ellipse cx="350" cy="820" rx="220" ry="35" fill="none" stroke="rgba(168,140,210,0.2)" stroke-width="1"/>
+        <ellipse cx="350" cy="820" rx="160" ry="24" fill="none" stroke="rgba(168,140,210,0.14)" stroke-width="1"/>
+        <!-- Kanji watermark -->
+        <text x="350" y="300" text-anchor="middle" font-family="serif" font-size="200" fill="rgba(253,240,248,0.04)" transform="rotate(-5,350,300)">蓮</text>
+      </svg>
+    </div>
+
+    <div class="hero-float-badge">
+      <span class="big">+5</span>
+      <span class="small">años de<br>experiencia</span>
+    </div>
+
+    <!-- Loto decorativo flotante -->
+    <div class="lotus-hero-deco">
+      <div class="lotus-float-wrap">
+        <svg class="lotus-svg" width="140" height="120" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#E8A0C0;">
+          <use href="#lotus-symbol"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-line">
+    <span>Explorar</span>
+  </div>
+</section>
+
+<!-- LOTO SEPARADOR -->
+<div style="background:var(--cream); display:flex; justify-content:center; padding:2rem 0 0; overflow:hidden;">
+  <div class="lotus-float-wrap" style="opacity:0; animation: fadeIn 1s ease 0.3s forwards;">
+    <svg class="lotus-svg" width="90" height="78" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--moss);">
+      <use href="#lotus-symbol"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section class="about" id="sobre-mi">
+  <div class="about-visual">
+    <svg viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="aboutGrad" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stop-color="#9B6B9B"/>
+          <stop offset="100%" stop-color="#2E1A2E"/>
+        </radialGradient>
+      </defs>
+      <rect width="600" height="700" fill="url(#aboutGrad)"/>
+      <!-- Grid pattern -->
+      <pattern id="gridPat" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(253,246,249,0.05)" stroke-width="0.5"/>
+      </pattern>
+      <rect width="600" height="700" fill="url(#gridPat)"/>
+      <!-- Hands silhouette abstraction -->
+      <g transform="translate(180, 250)" opacity="0.12">
+        <ellipse cx="120" cy="60" rx="90" ry="140" fill="#FDF6F9"/>
+        <ellipse cx="80" cy="40" rx="12" ry="55" fill="#FDF6F9" transform="rotate(-20, 80, 40)"/>
+        <ellipse cx="105" cy="30" rx="11" ry="58" fill="#FDF6F9" transform="rotate(-8, 105, 30)"/>
+        <ellipse cx="132" cy="28" rx="11" ry="60" fill="#FDF6F9" transform="rotate(5, 132, 28)"/>
+        <ellipse cx="157" cy="35" rx="10" ry="52" fill="#FDF6F9" transform="rotate(15, 157, 35)"/>
+      </g>
+      <!-- Circle ornament -->
+      <circle cx="300" cy="350" r="180" fill="none" stroke="rgba(253,246,249,0.1)" stroke-width="1" stroke-dasharray="4 8"/>
+      <circle cx="300" cy="350" r="140" fill="none" stroke="rgba(253,246,249,0.06)" stroke-width="1"/>
+      <!-- Kanji -->
+      <text x="300" y="420" text-anchor="middle" font-family="serif" font-size="200" fill="rgba(253,246,249,0.05)">静</text>
+      <!-- accent lines -->
+      <line x1="0" y1="500" x2="600" y2="500" stroke="rgba(253,246,249,0.05)" stroke-width="1"/>
+      <line x1="0" y1="520" x2="400" y2="520" stroke="rgba(253,246,249,0.05)" stroke-width="1"/>
+      <!-- Sakura petal floats -->
+      <ellipse cx="80" cy="200" rx="14" ry="22" fill="rgba(201,122,155,0.15)" transform="rotate(-25,80,200)"/>
+      <ellipse cx="480" cy="480" rx="11" ry="18" fill="rgba(191,143,191,0.12)" transform="rotate(15,480,480)"/>
+    </svg>
+  </div>
+
+  <div class="about-content">
+    <div class="section-divider reveal">
+      <span>Sobre mí</span>
+    </div>
+    <h2 class="section-title reveal">Soy Cecilia,<br><em>quiromasajista</em></h2>
+    <p class="about-text reveal">
+      Quiromasajista certificada, ofrezco masajes relajantes, descontracturantes y terapéuticos, maderoterapia y limpiezas faciales adaptadas a tu piel. Cada sesión se adapta a lo que tu cuerpo necesita en cada momento.
+    </p>
+    <p class="about-text reveal">
+      Cuento con dos gabinetes en Mutxamel: uno interior y uno exterior, donde podrás relajarte al aire libre con el canto de los pájaros y el suave vaivén del viento. Porque cada masaje es una experiencia.
+    </p>
+    <div class="about-stats reveal">
+      <div>
+        <span class="stat-num">500+</span>
+        <span class="stat-label">Sesiones realizadas</span>
+      </div>
+      <div>
+        <span class="stat-num">5+</span>
+        <span class="stat-label">Años de práctica</span>
+      </div>
+      <div>
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Satisfacción</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="servicios">
+  <div class="services-header reveal">
+    <div>
+      <div class="section-divider">
+        <span>Tratamientos</span>
+      </div>
+      <h2 class="section-title">Lo que <em>ofrezco</em></h2>
+    </div>
+    <p style="max-width:320px; font-size:0.85rem; line-height:1.8; color:var(--bark-soft);">
+      Cada tratamiento está pensado para un objetivo concreto. Consulta dudas antes de reservar.
+    </p>
+  </div>
+
+  <div class="services-grid">
+
+    <div class="service-card reveal">
+      <div class="service-num">01</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 8C16 8 10 16 10 24s6 16 14 16 14-8 14-16S32 8 24 8z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 24c0-3 2.5-7 6-7s6 4 6 7-2.5 7-6 7-6-4-6-7z" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.6"/>
+      </svg>
+      <div class="service-name">Masaje Relajante</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Deslizamientos suaves y rítmicos para liberar la tensión acumulada, reducir el estrés y activar el sistema nervioso parasimpático. Pura calma.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">02</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 20c2-5 6-9 12-9s10 4 12 9" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M10 28c2 5 7 10 14 10s12-5 14-10" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M16 24h16" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+        <path d="M14 27h20" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+      </svg>
+      <div class="service-name">Masaje Terapéutico</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Trabajo profundo y específico sobre contracturas y zonas de tensión crónica. Ideal para dolores musculares, cervicales y lumbares persistentes.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">03</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="24" cy="24" rx="14" ry="10" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M14 20c-3-1-5-2-4-5s4-3 6-1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M34 20c3-1 5-2 4-5s-4-3-6-1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M14 28c-3 1-5 2-4 5s4 3 6 1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M34 28c3 1 5 2 4 5s-4 3-6 1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <circle cx="24" cy="24" r="3" fill="#9B6B9B" opacity="0.3"/>
+      </svg>
+      <div class="service-name">Masaje Linfático</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Técnica suave y rítmica que estimula el sistema linfático para eliminar toxinas, reducir la retención de líquidos y mejorar el sistema inmune.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">04</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 16c0 0 2-3 6-3s6 3 6 3" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M16 26c2 4 5 6 8 6s6-2 8-6" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <circle cx="24" cy="22" r="3" fill="#9B6B9B" opacity="0.25"/>
+      </svg>
+      <div class="service-name">Facial</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Limpieza facial adaptada a tu tipo de piel. Incluye exfoliación, extracción y masaje facial drenante que devuelve luminosidad y vitalidad al rostro.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">45 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">05</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 32c0-8 5-18 12-22 7 4 12 14 12 22" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M17 30c0-5 3-12 7-15 4 3 7 10 7 15" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+        <line x1="24" y1="36" x2="24" y2="40" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <div class="service-name">Maderoterapia</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Técnica reductora con instrumentos de madera que moldean el cuerpo, activan la circulación y reducen la celulitis de forma natural y efectiva.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">06</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 28c0-8 6-16 14-16s14 8 14 16" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <ellipse cx="16" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
+        <ellipse cx="32" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
+        <ellipse cx="24" cy="32" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
+      </svg>
+      <div class="service-name">Masaje Reductor</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Maniobras específicas que activan el metabolismo graso, mejoran el tono y la elasticidad, y contribuyen al remodelado corporal de forma progresiva.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+    <div class="service-card reveal">
+      <div class="service-num">07</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <circle cx="32" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <circle cx="16" cy="24" r="3" fill="#9B6B9B" opacity="0.2"/>
+        <circle cx="32" cy="24" r="3" fill="#9B6B9B" opacity="0.2"/>
+        <path d="M16 17V12M32 17V12" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+      <div class="service-name">Masaje con Ventosas</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Las ventosas generan una succión que descontractura en profundidad, mejora la circulación sanguínea y alivia dolores musculares persistentes.</div>
+      <div class="service-footer">
+        <div class="service-price">Consultar</div>
+        <div class="service-duration">60 min</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="benefits">
+  <div>
+    <div class="section-divider reveal">
+      <span>Por qué Hasu</span>
+    </div>
+    <h2 class="section-title reveal">Un espacio<br>que te <em>cuida</em></h2>
+    <p style="font-size:0.9rem; line-height:1.8; color:var(--bark-soft); max-width:380px; margin-top:1rem;" class="reveal">
+      No es solo un masaje. Es un momento dedicado exclusivamente a ti, sin prisas, sin rutinas, sin distracciones.
+    </p>
+  </div>
+
+  <div class="benefits-list">
+    <div class="benefit-item">
+      <div class="benefit-num-wrap"><span>01</span></div>
+      <div class="benefit-text">
+        <h4>Atención 100% personalizada</h4>
+        <p>Cada sesión empieza con una consulta para entender tu estado actual, objetivos y zonas de trabajo prioritarias.</p>
+      </div>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-num-wrap"><span>02</span></div>
+      <div class="benefit-text">
+        <h4>Dos gabinetes únicos</h4>
+        <p>Un gabinete interior acondicionado y un gabinete exterior al aire libre en Mutxamel, donde la naturaleza forma parte de tu sesión.</p>
+      </div>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-num-wrap"><span>03</span></div>
+      <div class="benefit-text">
+        <h4>Flexibilidad horaria</h4>
+        <p>Citas de lunes a sábado. Mañana, tarde y noche. Reserva online en menos de 2 minutos, sin esperas.</p>
+      </div>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-num-wrap"><span>04</span></div>
+      <div class="benefit-text">
+        <h4>Formación continua</h4>
+        <p>Actualización permanente en técnicas terapéuticas. Lo que aprendí ayer, lo aplico hoy en tu bienestar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="testimonios">
+  <!-- Loto decorativo testimonios -->
+  <div style="position:absolute; top:2rem; right:3rem; opacity:0.12; pointer-events:none; animation: lotusFloat 7s ease-in-out 3s infinite;">
+    <svg class="lotus-svg" width="180" height="155" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#E8A0C0;">
+      <use href="#lotus-symbol"/>
+    </svg>
+  </div>
+  <div class="section-divider reveal" style="--moss: var(--moss-light);">
+    <span style="color: var(--moss-light);">Testimonios</span>
+  </div>
+  <h2 class="section-title reveal" style="color: var(--cream);">Lo que dicen<br>mis <em style="color:var(--moss-light)">clientas</em></h2>
+
+  <div class="testimonials-grid">
+
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">
+        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+      </div>
+      <p class="testimonial-text">"Mi novio me regaló un masaje con Cecilia por mi cumpleaños. Desde el primer momento me hizo sentir cómoda y bienvenida. Su sala es muy agradable y relajante. Sin duda uno de los mejores masajes que he recibido. Es una auténtica profesional que sabe exactamente lo que hace."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">N</div>
+        <div>
+          <span class="author-name">Naomi Martinez</span>
+          <span class="author-source">Google Maps · hace 8 meses</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">
+        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+      </div>
+      <p class="testimonial-text">"He ido en varias ocasiones, tanto para masaje descontracturante como por dolores de bruxismo, y siempre acabé la sesión como nueva. Cecilia, excelente profesional. Sin dudas la recomiendo."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">M</div>
+        <div>
+          <span class="author-name">Micaela Pereyra</span>
+          <span class="author-source">Google Maps · hace un año</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">
+        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+      </div>
+      <p class="testimonial-text">"He estado en Estados Unidos como dueña de un spa terapéutico y Cecilia me dio un masaje de primera. Hace un trabajo increíble y tiene una personalidad encantadora. ¡La recomiendo muchísimo!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">V</div>
+        <div>
+          <span class="author-name">Victoria Golden</span>
+          <span class="author-source">Google Maps · hace 6 meses</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">
+        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+      </div>
+      <p class="testimonial-text">"Ceci es una masajista excelente, se ciñe a tus necesidades y adapta todo el entorno para que te sientas lo más cómodo posible. Tiene habilitado un espacio súper bonito y acogedor. Súper recomendable para cualquier tipo de dolor."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">A</div>
+        <div>
+          <span class="author-name">Andrea Martínez</span>
+          <span class="author-source">Google Maps · hace 5 meses</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center; margin-top:3rem;" class="reveal">
+    <a href="https://www.google.com/maps/place/Hasu+Masajes/@38.4354831,-0.42969,17z" target="_blank" style="display:inline-flex; align-items:center; gap:0.6rem; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(253,240,248,0.45); text-decoration:none; border-bottom:1px solid rgba(253,240,248,0.15); padding-bottom:2px; transition:color 0.3s, border-color 0.3s;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      Ver reseñas en Google
+    </a>
+  </div>
+
+</section>
+
+<!-- BOOKING -->
+<section class="booking" id="reservar">
+  <div class="booking-inner">
+    <div class="booking-header reveal">
+      <div class="section-divider" style="justify-content:center">
+        <span>Cita previa online</span>
+      </div>
+      <h2 class="section-title">Reserva tu<br><em>sesión</em></h2>
+      <p style="font-size:0.88rem; color:var(--bark-soft); margin-top:0.8rem;">Sin llamadas. Elige el día, la hora y el tratamiento.</p>
+    </div>
+
+    <div class="booking-form-wrap reveal" id="bookingWrap">
+      <!-- CALENDAR SIDE -->
+      <div class="calendar-wrap">
+        <h3>Elige una fecha</h3>
+        <div class="calendar" id="calendar">
+          <div class="cal-header">
+            <button class="cal-nav" id="calPrev">‹</button>
+            <div class="cal-month" id="calTitle"></div>
+            <button class="cal-nav" id="calNext">›</button>
+          </div>
+          <div class="cal-days-header">
+            <div class="cal-day-name">L</div>
+            <div class="cal-day-name">M</div>
+            <div class="cal-day-name">M</div>
+            <div class="cal-day-name">J</div>
+            <div class="cal-day-name">V</div>
+            <div class="cal-day-name">S</div>
+            <div class="cal-day-name">D</div>
+          </div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
+
+        <div class="time-slots-wrap" id="timeSlotsWrap" style="display:none">
+          <h4>Horarios disponibles</h4>
+          <div class="time-slots" id="timeSlots"></div>
+        </div>
+      </div>
+
+      <!-- FORM SIDE -->
+      <div class="booking-fields" id="bookingFields">
+        <h3>Tus datos</h3>
+
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input type="text" class="form-input" id="inputName" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono / WhatsApp</label>
+          <input type="tel" class="form-input" id="inputPhone" placeholder="+54 11 0000-0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tratamiento</label>
+          <div class="select-wrap">
+            <select class="form-select" id="inputService">
+              <option value="">Seleccionar…</option>
+              <option value="Masaje Relajante">Masaje Relajante</option>
+              <option value="Masaje Terapéutico">Masaje Terapéutico</option>
+              <option value="Masaje Linfático">Masaje Linfático</option>
+              <option value="Facial">Facial / Limpieza Facial</option>
+              <option value="Maderoterapia">Maderoterapia</option>
+              <option value="Masaje Reductor">Masaje Reductor</option>
+              <option value="Masaje con Ventosas">Masaje con Ventosas</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nota (opcional)</label>
+          <input type="text" class="form-input" id="inputNote" placeholder="Zonas a trabajar, consultas...">
+        </div>
+
+        <div class="booking-summary" id="bookingSummary">
+          <strong>Resumen de tu reserva:</strong><br>
+          <span id="summaryContent"></span>
+        </div>
+
+        <button class="btn-book" id="btnBook">Confirmar cita</button>
+        <p class="booking-note">Te confirmaré la cita por WhatsApp en menos de 2 horas. Sin pago anticipado.</p>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="booking-success" id="bookingSuccess">
+      <div class="check-circle">✓</div>
+      <h3>¡Cita solicitada!</h3>
+      <p>Tu solicitud ha sido recibida. Te contactaré por WhatsApp en menos de 2 horas para confirmar la cita.<br><br>Mientras tanto, puedes seguirme en Instagram <a href="https://www.instagram.com/hasu.masajes/" target="_blank" style="color:var(--moss); text-decoration:none;">@hasu.masajes</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="faq-inner">
+    <div class="section-divider reveal"><span>FAQ</span></div>
+    <h2 class="section-title reveal">Preguntas<br><em>frecuentes</em></h2>
+
+    <div style="margin-top:3rem">
+      <div class="faq-item reveal">
+        <button class="faq-question">
+          ¿Necesito cita previa?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>La cita es indispensable para garantizarte el espacio y el tiempo que merece tu sesión. Puedes reservar online aquí mismo o escribirme por WhatsApp.</p>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question">
+          ¿Con cuánta antelación puedo cancelar?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Puedes cancelar o reprogramar hasta 24 horas antes de la sesión sin ningún problema. Pasado ese tiempo, se cobrará el 50% del servicio por gestión del espacio.</p>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question">
+          ¿Los masajes tienen contraindicaciones?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Sí. Si tienes fiebre, infecciones activas, trombosis, heridas abiertas u otras condiciones médicas específicas, consultame antes de reservar. Siempre priorizamos tu seguridad.</p>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question">
+          ¿Cómo es la primera cita?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Empezamos con una breve consulta de 5-10 minutos para conocer tu estado, objetivos y posibles zonas a trabajar. Después, la sesión fluye.</p>
+        </div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question">
+          ¿Qué medios de pago aceptas?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Efectivo, Bizum, transferencia bancaria y tarjeta. Sin pago anticipado para la primera sesión.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT STRIP -->
+<div class="contact-strip">
+  <div class="contact-strip-text">
+    <h2>¿Tienes alguna duda?</h2>
+    <p>Llámame o escríbeme. Respondo rápido. · 615 64 29 37</p>
+  </div>
+  <div class="contact-strip-links">
+    <a href="tel:+34615642937" class="contact-link" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      615 64 29 37
+    </a>
+    <a href="https://wa.me/34615642937" class="contact-link" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </a>
+    <a href="https://www.instagram.com/hasu.masajes/" class="contact-link" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      Instagram
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">
+      <span class="kanji">蓮</span>
+      <span class="name">Hasu</span>
+    </div>
+    <p class="footer-tagline">Quiromasajista en Mutxamel, Alicante. Bienestar y relajación con atención cercana y totalmente personalizada.</p>
+    <div class="footer-social">
+      <a href="https://www.instagram.com/hasu.masajes/" class="social-link" target="_blank">ig</a>
+      <a href="https://wa.me/34615642937" class="social-link" target="_blank">wa</a>
+    </div>
+  </div>
+  <div class="footer-col">
+    <h4>Servicios</h4>
+    <ul>
+      <li><a href="#servicios">Masaje Relajante</a></li>
+      <li><a href="#servicios">Masaje Terapéutico</a></li>
+      <li><a href="#servicios">Masaje Linfático</a></li>
+      <li><a href="#servicios">Facial</a></li>
+      <li><a href="#servicios">Maderoterapia</a></li>
+      <li><a href="#servicios">Reductor</a></li>
+      <li><a href="#servicios">Ventosas</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Navegación</h4>
+    <ul>
+      <li><a href="#sobre-mi">Sobre mí</a></li>
+      <li><a href="#testimonios">Testimonios</a></li>
+      <li><a href="#faq">Preguntas frecuentes</a></li>
+      <li><a href="#reservar">Pedir cita</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span>© 2026 Hasu Masajes · Todos los derechos reservados</span>
+  <span style="display:inline-flex;align-items:center;gap:6px;">
+    <svg width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
+      <ellipse cx="20" cy="19" rx="4.5" ry="11" fill="#BF8FBF"/>
+      <ellipse cx="12" cy="22" rx="4" ry="9" fill="#BF8FBF" opacity="0.7" transform="rotate(-30 12 22)"/>
+      <ellipse cx="28" cy="22" rx="4" ry="9" fill="#BF8FBF" opacity="0.7" transform="rotate(30 28 22)"/>
+      <circle cx="20" cy="26" r="2.5" fill="#E8A0C0"/>
+    </svg>
+    Loto · Pureza · Renovación
+  </span>
+</div>
+
+<script>
+// HAMBURGER MENU
+function toggleNav() {
+  const links = document.getElementById('navLinks');
+  const btn = document.getElementById('navHamburger');
+  const overlay = document.getElementById('navOverlay');
+  links.classList.toggle('open');
+  btn.classList.toggle('open');
+  overlay.classList.toggle('open');
+  document.body.style.overflow = links.classList.contains('open') ? 'hidden' : '';
+}
+function closeNav() {
+  const links = document.getElementById('navLinks');
+  const btn = document.getElementById('navHamburger');
+  const overlay = document.getElementById('navOverlay');
+  links.classList.remove('open');
+  btn.classList.remove('open');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+if (cursor && ring) {
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  document.querySelectorAll('a, button, .service-card, .cal-day, .time-slot').forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
+  });
+  function animCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+}
+
+// NAV SCROLL
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// SCROLL REVEAL
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+  });
+}, { threshold: 0.12 });
+revealEls.forEach(el => observer.observe(el));
+
+// BENEFIT ITEMS
+const benefitObs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 120);
+      benefitObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.benefit-item').forEach(el => benefitObs.observe(el));
+
+// FAQ
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+
+// CALENDAR
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const today = new Date();
+let viewYear = today.getFullYear();
+let viewMonth = today.getMonth();
+let selectedDate = null;
+let selectedTime = null;
+
+// Simulated booked slots (in real app would come from backend)
+const bookedSlots = {
+  [`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()+2).padStart(2,'0')}`]: ['10:00', '14:00'],
+  [`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()+5).padStart(2,'0')}`]: ['09:00', '11:00', '15:00'],
+};
+
+function renderCalendar() {
+  const title = document.getElementById('calTitle');
+  const grid = document.getElementById('calDays');
+  title.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+  grid.innerHTML = '';
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  for (let i = 0; i < offset; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-day empty';
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    const date = new Date(viewYear, viewMonth, d);
+    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    const isSunday = date.getDay() === 0;
+
+    cell.textContent = d;
+    cell.className = 'cal-day';
+    if (isPast || isSunday) { cell.classList.add('past'); }
+    else { cell.classList.add('available'); }
+    if (isToday) cell.classList.add('today');
+    if (bookedSlots[dateStr]) cell.classList.add('has-dot');
+    if (selectedDate === dateStr) cell.classList.add('selected');
+
+    if (!isPast && !isSunday) {
+      cell.addEventListener('click', () => {
+        selectedDate = dateStr;
+        selectedTime = null;
+        renderCalendar();
+        showTimeSlots(dateStr);
+        updateSummary();
+      });
+    }
+    grid.appendChild(cell);
+  }
+}
+
+const allSlots = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+
+function showTimeSlots(dateStr) {
+  const wrap = document.getElementById('timeSlotsWrap');
+  const container = document.getElementById('timeSlots');
+  wrap.style.display = 'block';
+  container.innerHTML = '';
+  const booked = bookedSlots[dateStr] || [];
+  allSlots.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'time-slot';
+    btn.textContent = t;
+    if (booked.includes(t)) { btn.classList.add('booked'); btn.disabled = true; }
+    if (selectedTime === t) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      selectedTime = t;
+      container.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateSummary();
+    });
+    container.appendChild(btn);
+  });
+}
+
+function updateSummary() {
+  const summary = document.getElementById('bookingSummary');
+  const content = document.getElementById('summaryContent');
+  if (selectedDate && selectedTime) {
+    const [y,m,d] = selectedDate.split('-');
+    const service = document.getElementById('inputService').value;
+    let txt = `📅 ${d}/${m}/${y} a las ${selectedTime}`;
+    if (service) txt += `<br>💆 ${service}`;
+    content.innerHTML = txt;
+    summary.classList.add('visible');
+  } else {
+    summary.classList.remove('visible');
+  }
+}
+
+document.getElementById('inputService').addEventListener('change', updateSummary);
+
+document.getElementById('calPrev').addEventListener('click', () => {
+  viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  renderCalendar();
+});
+
+renderCalendar();
+
+// BOOKING SUBMIT
+document.getElementById('btnBook').addEventListener('click', () => {
+  const name = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  const service = document.getElementById('inputService').value;
+
+  if (!name || !phone || !service || !selectedDate || !selectedTime) {
+    const missing = [];
+    if (!selectedDate) missing.push('una fecha');
+    if (!selectedTime) missing.push('un horario');
+    if (!name) missing.push('tu nombre');
+    if (!phone) missing.push('tu teléfono');
+    if (!service) missing.push('el tratamiento');
+    alert(`Por favor completá: ${missing.join(', ')}.`);
+    return;
+  }
+
+  // In real app: POST to API/WhatsApp webhook
+  // For demo: show success
+  document.getElementById('bookingWrap').style.display = 'none';
+  document.getElementById('bookingSuccess').classList.add('visible');
+});
+</script>
+</body>
+</html>
