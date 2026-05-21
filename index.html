@@ -1437,6 +1437,79 @@
     margin-bottom: 2rem;
   }
 
+  /* ===== GIFT CARDS ===== */
+  .giftcards {
+    background: var(--sand);
+    padding: 8rem 6rem;
+  }
+  .giftcards-inner { max-width: 1100px; margin: 0 auto; }
+  .giftcards-header { text-align: center; margin-bottom: 4rem; }
+  .giftcards-header p {
+    font-size: 0.88rem; color: var(--bark-soft);
+    margin: 0.8rem auto 0; max-width: 420px; line-height: 1.8;
+  }
+  .giftcard-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .giftcard-form h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300; font-size: 1.3rem;
+    color: var(--bark); margin-bottom: 1.5rem;
+  }
+  .giftcard-preview-area {
+    display: flex; flex-direction: column; align-items: center; gap: 1.2rem;
+  }
+  #gcCanvas {
+    width: 100%; border-radius: 10px;
+    box-shadow: 0 12px 48px rgba(46,26,46,0.2); display: block;
+  }
+  .gc-actions { width: 100%; display: none; }
+  .gc-actions.visible { display: block; }
+  .gc-download-btn {
+    display: block; width: 100%;
+    background: transparent; border: 1px solid var(--moss);
+    color: var(--moss); padding: 0.9rem 2rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.75rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; margin-top: 0.7rem; transition: all 0.3s;
+  }
+  .gc-download-btn:hover:not(:disabled) { background: var(--moss); color: var(--cream); }
+  .gc-download-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--stone); color: var(--stone); }
+  .gc-note {
+    font-size: 0.72rem; color: var(--stone);
+    margin-top: 0.8rem; line-height: 1.7; text-align: center;
+  }
+  .gc-unlock-wrap {
+    margin-top: 1.2rem; padding: 1.2rem;
+    background: rgba(155,107,155,0.06);
+    border: 1px solid rgba(155,107,155,0.15); border-radius: 4px;
+  }
+  .gc-unlock-wrap p { font-size: 0.75rem; color: var(--bark-soft); margin-bottom: 0.8rem; line-height: 1.6; }
+  .gc-unlock-row { display: flex; gap: 0.6rem; }
+  .gc-unlock-row input {
+    flex: 1; font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.6rem 0.8rem; border: 1px solid rgba(155,107,155,0.3);
+    background: var(--cream); color: var(--bark); outline: none;
+  }
+  .gc-unlock-row button {
+    background: var(--moss); color: var(--cream); border: none;
+    padding: 0.6rem 1rem; font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.2s;
+  }
+  .gc-unlock-row button:hover { opacity: 0.85; }
+  .gc-unlock-msg { font-size: 0.72rem; margin-top: 0.5rem; line-height: 1.5; }
+  .gc-unlock-msg.ok { color: #5a8f6a; }
+  .gc-unlock-msg.err { color: var(--terracotta); }
+
+  @media (max-width: 900px) {
+    .giftcard-wrap { grid-template-columns: 1fr; }
+    .giftcards { padding: 5rem 1.5rem; }
+  }
+
 </style>
 </head>
 <body>
@@ -1478,18 +1551,20 @@
     <span class="nav-logo-kanji">蓮</span>
     <span class="nav-logo-text">Hasu</span>
   </a>
-  <ul class="nav-links" id="navLinks">
-    <li><a href="#servicios" onclick="closeNav()">Servicios</a></li>
-    <li><a href="#sobre-mi" onclick="closeNav()">Sobre mí</a></li>
-    <li><a href="#testimonios" onclick="closeNav()">Testimonios</a></li>
-    <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
-    <li><a href="#reservar" class="nav-cta" onclick="closeNav()">Reservar cita</a></li>
-  </ul>
   <button class="nav-hamburger" id="navHamburger" aria-label="Menú" onclick="toggleNav()">
     <span></span><span></span><span></span>
   </button>
-  <div class="nav-close-overlay" id="navOverlay" onclick="closeNav()"></div>
 </nav>
+<!-- Nav overlay y links fuera de nav para evitar bug iOS backdrop-filter -->
+<ul class="nav-links" id="navLinks">
+  <li><a href="#servicios" onclick="closeNav()">Servicios</a></li>
+  <li><a href="#sobre-mi" onclick="closeNav()">Sobre mí</a></li>
+  <li><a href="#testimonios" onclick="closeNav()">Testimonios</a></li>
+  <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
+  <li><a href="#regalo" onclick="closeNav()">Gift Card</a></li>
+  <li><a href="#reservar" class="nav-cta" onclick="closeNav()">Reservar cita</a></li>
+</ul>
+<div class="nav-close-overlay" id="navOverlay" onclick="closeNav()"></div>
 
 <!-- HERO -->
 <section class="hero">
@@ -1572,8 +1647,8 @@
     </div>
 
     <div class="hero-float-badge">
-      <span class="big">+5</span>
-      <span class="small">años de<br>experiencia</span>
+      <span class="big">Amplia</span>
+      <span class="small">experiencia</span>
     </div>
 
     <!-- Loto decorativo flotante -->
@@ -1611,12 +1686,10 @@
         </radialGradient>
       </defs>
       <rect width="600" height="700" fill="url(#aboutGrad)"/>
-      <!-- Grid pattern -->
       <pattern id="gridPat" width="40" height="40" patternUnits="userSpaceOnUse">
         <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(253,246,249,0.05)" stroke-width="0.5"/>
       </pattern>
       <rect width="600" height="700" fill="url(#gridPat)"/>
-      <!-- Hands silhouette abstraction -->
       <g transform="translate(180, 250)" opacity="0.12">
         <ellipse cx="120" cy="60" rx="90" ry="140" fill="#FDF6F9"/>
         <ellipse cx="80" cy="40" rx="12" ry="55" fill="#FDF6F9" transform="rotate(-20, 80, 40)"/>
@@ -1624,15 +1697,11 @@
         <ellipse cx="132" cy="28" rx="11" ry="60" fill="#FDF6F9" transform="rotate(5, 132, 28)"/>
         <ellipse cx="157" cy="35" rx="10" ry="52" fill="#FDF6F9" transform="rotate(15, 157, 35)"/>
       </g>
-      <!-- Circle ornament -->
       <circle cx="300" cy="350" r="180" fill="none" stroke="rgba(253,246,249,0.1)" stroke-width="1" stroke-dasharray="4 8"/>
       <circle cx="300" cy="350" r="140" fill="none" stroke="rgba(253,246,249,0.06)" stroke-width="1"/>
-      <!-- Kanji -->
       <text x="300" y="420" text-anchor="middle" font-family="serif" font-size="200" fill="rgba(253,246,249,0.05)">静</text>
-      <!-- accent lines -->
       <line x1="0" y1="500" x2="600" y2="500" stroke="rgba(253,246,249,0.05)" stroke-width="1"/>
       <line x1="0" y1="520" x2="400" y2="520" stroke="rgba(253,246,249,0.05)" stroke-width="1"/>
-      <!-- Sakura petal floats -->
       <ellipse cx="80" cy="200" rx="14" ry="22" fill="rgba(201,122,155,0.15)" transform="rotate(-25,80,200)"/>
       <ellipse cx="480" cy="480" rx="11" ry="18" fill="rgba(191,143,191,0.12)" transform="rotate(15,480,480)"/>
     </svg>
@@ -1651,12 +1720,12 @@
     </p>
     <div class="about-stats reveal">
       <div>
-        <span class="stat-num">500+</span>
+        <span class="stat-num">200+</span>
         <span class="stat-label">Sesiones realizadas</span>
       </div>
       <div>
-        <span class="stat-num">5+</span>
-        <span class="stat-label">Años de práctica</span>
+        <span class="stat-num">✦</span>
+        <span class="stat-label">Amplia experiencia</span>
       </div>
       <div>
         <span class="stat-num">100%</span>
@@ -1682,40 +1751,126 @@
 
   <div class="services-grid">
 
+    <!-- 01 Descontracturante -->
     <div class="service-card reveal">
       <div class="service-num">01</div>
       <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 8C16 8 10 16 10 24s6 16 14 16 14-8 14-16S32 8 24 8z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
-        <path d="M18 24c0-3 2.5-7 6-7s6 4 6 7-2.5 7-6 7-6-4-6-7z" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.6"/>
+        <path d="M14 28c0-7 4-14 10-14s10 7 10 14" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M10 32c-2-1-3-3-2-5s3-3 5-2" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M38 32c2-1 3-3 2-5s-3-3-5-2" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M14 28c-1 4-1 8 0 10M34 28c1 4 1 8 0 10" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
       </svg>
-      <div class="service-name">Masaje Relajante</div>
+      <div class="service-name">Descontracturante</div>
       <div class="service-line"></div>
-      <div class="service-desc">Deslizamientos suaves y rítmicos para liberar la tensión acumulada, reducir el estrés y activar el sistema nervioso parasimpático. Pura calma.</div>
-      <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
+      <div class="service-desc">Espalda, cuello y hombros. Trabajo profundo sobre las zonas de mayor tensión muscular, liberando contracturas y reestableciendo el movimiento natural.</div>
+      <div class="service-footer" style="flex-direction:column; gap:0.4rem;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%">
+          <div class="service-price">35€</div>
+          <div class="service-duration">30 min</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%; opacity:0.75">
+          <div class="service-price" style="font-size:1.2rem">50€</div>
+          <div class="service-duration">1 hora</div>
+        </div>
       </div>
     </div>
 
+    <!-- 02 Craneofacial -->
     <div class="service-card reveal">
       <div class="service-num">02</div>
       <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 20c2-5 6-9 12-9s10 4 12 9" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <path d="M10 28c2 5 7 10 14 10s12-5 14-10" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <path d="M16 24h16" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
-        <path d="M14 27h20" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+        <ellipse cx="24" cy="21" rx="12" ry="13" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 34v4M30 34v4" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M19 22c0-1.5 1.3-2.5 2.5-2.5" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M26 22c0-1.5 1.3-2.5 2.5-2.5" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M20 27c1 1 2.5 1.5 4 1.5s3-0.5 4-1.5" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
       </svg>
-      <div class="service-name">Masaje Terapéutico</div>
+      <div class="service-name">Craneofacial</div>
       <div class="service-line"></div>
-      <div class="service-desc">Trabajo profundo y específico sobre contracturas y zonas de tensión crónica. Ideal para dolores musculares, cervicales y lumbares persistentes.</div>
+      <div class="service-desc">Trabaja el cráneo, la mandíbula y el cuero cabelludo para liberar tensiones, reducir cefaleas y restaurar el equilibrio del sistema craneosacral.</div>
       <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
+        <div class="service-price">30€</div>
+        <div class="service-duration">30 min</div>
       </div>
     </div>
 
+    <!-- 03 Facial Relajante -->
     <div class="service-card reveal">
       <div class="service-num">03</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 16c0 0 2-3 6-3s6 3 6 3" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M16 26c2 4 5 6 8 6s6-2 8-6" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <circle cx="24" cy="22" r="3" fill="#9B6B9B" opacity="0.25"/>
+      </svg>
+      <div class="service-name">Facial Relajante</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Maniobras suaves y rítmicas que relajan la musculatura del rostro, reducen el estrés facial y devuelven luminosidad y vitalidad a la piel.</div>
+      <div class="service-footer">
+        <div class="service-price">30€</div>
+        <div class="service-duration">30 min</div>
+      </div>
+    </div>
+
+    <!-- 04 Facial Intrabucal -->
+    <div class="service-card reveal">
+      <div class="service-num">04</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 27c1 3 3 5 6 5s5-2 6-5" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.8"/>
+        <path d="M18 27h12" stroke="#9B6B9B" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+        <circle cx="20" cy="19" r="1.2" fill="#9B6B9B" opacity="0.5"/>
+        <circle cx="28" cy="19" r="1.2" fill="#9B6B9B" opacity="0.5"/>
+      </svg>
+      <div class="service-name">Facial Intrabucal</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Trabaja los músculos de la mandíbula desde el interior y el exterior. Alivia el bruxismo, la tensión de la ATM y los dolores de cabeza asociados.</div>
+      <div class="service-footer">
+        <div class="service-price">40€</div>
+        <div class="service-duration">30 min</div>
+      </div>
+    </div>
+
+    <!-- 05 Masaje de Manos -->
+    <div class="service-card reveal">
+      <div class="service-num">05</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 38c-6 0-12-6-12-14v-8c0-1 1-2 2-2s2 1 2 2v6" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M16 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M20 22v-8c0-1 1-2 2-2s2 1 2 2v8" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M24 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M28 22v-5c0-1 1-2 2-2s2 1 2 2v9" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div class="service-name">Masaje de Manos</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Alivia tensiones en manos y muñecas, mejora la circulación y reduce la rigidez articular. Ideal para trabajos manuales o uso prolongado de pantallas.</div>
+      <div class="service-footer">
+        <div class="service-price">30€</div>
+        <div class="service-duration">30 min</div>
+      </div>
+    </div>
+
+    <!-- 06 Masaje de Pies -->
+    <div class="service-card reveal">
+      <div class="service-num">06</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 32c0-8 4-16 10-16 4 0 6 4 6 8v4c0 4-3 8-8 8h-2c-3 0-6-2-6-4z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <circle cx="29" cy="18" r="1.5" fill="#9B6B9B" opacity="0.5"/>
+        <circle cx="32" cy="21" r="1.5" fill="#9B6B9B" opacity="0.5"/>
+        <circle cx="33" cy="25" r="1.5" fill="#9B6B9B" opacity="0.5"/>
+      </svg>
+      <div class="service-name">Masaje de Pies</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Trabajo sobre la planta, el empeine y las articulaciones del pie para aliviar el cansancio, activar la circulación y trabajar los puntos reflejos de la podología zonal.</div>
+      <div class="service-footer">
+        <div class="service-price">30€</div>
+        <div class="service-duration">30 min</div>
+      </div>
+    </div>
+
+    <!-- 07 Linfáticos -->
+    <div class="service-card reveal">
+      <div class="service-num">07</div>
       <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="24" cy="24" rx="14" ry="10" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M14 20c-3-1-5-2-4-5s4-3 6-1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -1724,67 +1879,42 @@
         <path d="M34 28c3 1 5 2 4 5s-4 3-6 1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
         <circle cx="24" cy="24" r="3" fill="#9B6B9B" opacity="0.3"/>
       </svg>
-      <div class="service-name">Masaje Linfático</div>
+      <div class="service-name">Linfáticos</div>
       <div class="service-line"></div>
-      <div class="service-desc">Técnica suave y rítmica que estimula el sistema linfático para eliminar toxinas, reducir la retención de líquidos y mejorar el sistema inmune.</div>
-      <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
+      <div class="service-desc">Técnica suave y rítmica que estimula el sistema linfático para eliminar toxinas, reducir la retención de líquidos y mejorar la función inmune. Cuerpo completo o solo piernas.</div>
+      <div class="service-footer" style="flex-direction:column; gap:0.4rem;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%">
+          <div class="service-price">75€</div>
+          <div class="service-duration">1h 30 · Cuerpo completo</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%; opacity:0.75">
+          <div class="service-price" style="font-size:1.2rem">55€</div>
+          <div class="service-duration">40 min · Solo piernas</div>
+        </div>
       </div>
     </div>
 
+    <!-- 08 Reductores -->
     <div class="service-card reveal">
-      <div class="service-num">04</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
-        <path d="M18 16c0 0 2-3 6-3s6 3 6 3" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <path d="M16 26c2 4 5 6 8 6s6-2 8-6" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <circle cx="24" cy="22" r="3" fill="#9B6B9B" opacity="0.25"/>
-      </svg>
-      <div class="service-name">Facial</div>
-      <div class="service-line"></div>
-      <div class="service-desc">Limpieza facial adaptada a tu tipo de piel. Incluye exfoliación, extracción y masaje facial drenante que devuelve luminosidad y vitalidad al rostro.</div>
-      <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">45 min</div>
-      </div>
-    </div>
-
-    <div class="service-card reveal">
-      <div class="service-num">05</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 32c0-8 5-18 12-22 7 4 12 14 12 22" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <path d="M17 30c0-5 3-12 7-15 4 3 7 10 7 15" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
-        <line x1="24" y1="36" x2="24" y2="40" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round"/>
-      </svg>
-      <div class="service-name">Maderoterapia</div>
-      <div class="service-line"></div>
-      <div class="service-desc">Técnica reductora con instrumentos de madera que moldean el cuerpo, activan la circulación y reducen la celulitis de forma natural y efectiva.</div>
-      <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
-      </div>
-    </div>
-
-    <div class="service-card reveal">
-      <div class="service-num">06</div>
+      <div class="service-num">08</div>
       <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 28c0-8 6-16 14-16s14 8 14 16" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <ellipse cx="16" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
         <ellipse cx="32" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
         <ellipse cx="24" cy="32" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
       </svg>
-      <div class="service-name">Masaje Reductor</div>
+      <div class="service-name">Reductores</div>
       <div class="service-line"></div>
       <div class="service-desc">Maniobras específicas que activan el metabolismo graso, mejoran el tono y la elasticidad, y contribuyen al remodelado corporal de forma progresiva.</div>
       <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
+        <div class="service-price">80€</div>
+        <div class="service-duration">45 min</div>
       </div>
     </div>
 
+    <!-- 09 Ventosas -->
     <div class="service-card reveal">
-      <div class="service-num">07</div>
+      <div class="service-num">09</div>
       <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="16" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <circle cx="32" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
@@ -1792,12 +1922,85 @@
         <circle cx="32" cy="24" r="3" fill="#9B6B9B" opacity="0.2"/>
         <path d="M16 17V12M32 17V12" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
       </svg>
-      <div class="service-name">Masaje con Ventosas</div>
+      <div class="service-name">Ventosas</div>
       <div class="service-line"></div>
-      <div class="service-desc">Las ventosas generan una succión que descontractura en profundidad, mejora la circulación sanguínea y alivia dolores musculares persistentes.</div>
+      <div class="service-desc">La succión descontractura en profundidad, mejora la circulación sanguínea y alivia dolores musculares persistentes de forma eficaz.</div>
       <div class="service-footer">
-        <div class="service-price">Consultar</div>
-        <div class="service-duration">60 min</div>
+        <div class="service-price">40€</div>
+        <div class="service-duration">45 min</div>
+      </div>
+    </div>
+
+    <!-- 10 Relajantes Completo -->
+    <div class="service-card reveal">
+      <div class="service-num">10</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 8C16 8 10 16 10 24s6 16 14 16 14-8 14-16S32 8 24 8z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <path d="M18 24c0-3 2.5-7 6-7s6 4 6 7-2.5 7-6 7-6-4-6-7z" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.6"/>
+      </svg>
+      <div class="service-name">Relajantes Completo</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Deslizamientos suaves y rítmicos en todo el cuerpo para liberar la tensión acumulada, reducir el estrés y activar el sistema nervioso parasimpático. Pura calma.</div>
+      <div class="service-footer">
+        <div class="service-price">50€</div>
+        <div class="service-duration">1 hora</div>
+      </div>
+    </div>
+
+    <!-- 11 Deportivos -->
+    <div class="service-card reveal">
+      <div class="service-num">11</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 36c2-4 5-8 8-10" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M24 26c2-5 6-10 8-14" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <circle cx="32" cy="12" r="3" stroke="#9B6B9B" stroke-width="1.1" fill="none"/>
+        <path d="M20 30c-2 2-4 3-6 2" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <path d="M26 20c2-1 5-1 6 1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+      </svg>
+      <div class="service-name">Deportivos</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Orientado a la recuperación muscular, la prevención de lesiones y la mejora del rendimiento. Trabaja en zonas de sobrecarga para optimizar la condición física.</div>
+      <div class="service-footer">
+        <div class="service-price">50€</div>
+        <div class="service-duration">40 min</div>
+      </div>
+    </div>
+
+    <!-- 12 Spa de Manos -->
+    <div class="service-card reveal">
+      <div class="service-num">12</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 38c-6 0-12-6-12-14v-8c0-1 1-2 2-2s2 1 2 2v6" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M16 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M20 22v-8c0-1 1-2 2-2s2 1 2 2v8" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M24 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M28 22v-5c0-1 1-2 2-2s2 1 2 2v9" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <path d="M12 38q12-4 24 0" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+      </svg>
+      <div class="service-name">Spa de Manos</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Sumersión en agua con sales y burbujas, exfoliación para eliminar células muertas, suavizar asperezas y renovar la piel, limado y manopla de masaje térmico.</div>
+      <div class="service-footer">
+        <div class="service-price">50€</div>
+        <div class="service-duration">40 min</div>
+      </div>
+    </div>
+
+    <!-- 13 Spa de Pies -->
+    <div class="service-card reveal">
+      <div class="service-num">13</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 32c0-8 4-16 10-16 4 0 6 4 6 8v4c0 4-3 8-8 8h-2c-3 0-6-2-6-4z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
+        <circle cx="29" cy="18" r="1.5" fill="#9B6B9B" opacity="0.5"/>
+        <circle cx="32" cy="21" r="1.5" fill="#9B6B9B" opacity="0.4"/>
+        <path d="M12 40q12-4 24 0" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+      </svg>
+      <div class="service-name">Spa de Pies</div>
+      <div class="service-line"></div>
+      <div class="service-desc">Sumersión en agua con sales, exfoliación para eliminar células muertas, suavizar asperezas y renovar la piel, limado y masaje manual de pies. Hidratación y cuidado integral.</div>
+      <div class="service-footer">
+        <div class="service-price">50€</div>
+        <div class="service-duration">40 min</div>
       </div>
     </div>
 
@@ -1835,7 +2038,7 @@
       <div class="benefit-num-wrap"><span>03</span></div>
       <div class="benefit-text">
         <h4>Flexibilidad horaria</h4>
-        <p>Citas de lunes a sábado. Mañana, tarde y noche. Reserva online en menos de 2 minutos, sin esperas.</p>
+        <p>Citas de lunes a viernes, de 10:00 a 18:00. Reserva online en menos de 2 minutos, sin esperas.</p>
       </div>
     </div>
     <div class="benefit-item">
@@ -1859,7 +2062,7 @@
   <div class="section-divider reveal" style="--moss: var(--moss-light);">
     <span style="color: var(--moss-light);">Testimonios</span>
   </div>
-  <h2 class="section-title reveal" style="color: var(--cream);">Lo que dicen<br>mis <em style="color:var(--moss-light)">clientas</em></h2>
+  <h2 class="section-title reveal" style="color: var(--cream);">Lo que dicen<br>mis <em style="color:var(--moss-light)">clientes</em></h2>
 
   <div class="testimonials-grid">
 
@@ -1922,7 +2125,7 @@
   </div>
 
   <div style="text-align:center; margin-top:3rem;" class="reveal">
-    <a href="https://www.google.com/maps/place/Hasu+Masajes/@38.4354831,-0.42969,17z" target="_blank" style="display:inline-flex; align-items:center; gap:0.6rem; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(253,240,248,0.45); text-decoration:none; border-bottom:1px solid rgba(253,240,248,0.15); padding-bottom:2px; transition:color 0.3s, border-color 0.3s;">
+    <a href="https://www.google.com/maps/place/Hasu+Masajes/@38.4354873,-0.4322649,17z/data=!3m1!4b1!4m6!3m5!1s0xd623b93e722d3af:0xed3d7e95df12f8ee!8m2!3d38.4354831!4d-0.42969!16s%2Fg%2F11wpp_4pss" target="_blank" style="display:inline-flex; align-items:center; gap:0.6rem; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(253,240,248,0.45); text-decoration:none; border-bottom:1px solid rgba(253,240,248,0.15); padding-bottom:2px; transition:color 0.3s, border-color 0.3s;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
       Ver reseñas en Google
     </a>
@@ -1966,6 +2169,7 @@
         <div class="time-slots-wrap" id="timeSlotsWrap" style="display:none">
           <h4>Horarios disponibles</h4>
           <div class="time-slots" id="timeSlots"></div>
+          <p style="font-size:0.72rem; color:var(--stone); margin-top:1rem; line-height:1.6; letter-spacing:0.03em;">Los horarios son orientativos. Te confirmaré disponibilidad por WhatsApp antes de 2 horas.</p>
         </div>
       </div>
 
@@ -1978,21 +2182,25 @@
           <input type="text" class="form-input" id="inputName" placeholder="Tu nombre">
         </div>
         <div class="form-group">
-          <label class="form-label">Teléfono / WhatsApp</label>
-          <input type="tel" class="form-input" id="inputPhone" placeholder="+54 11 0000-0000">
-        </div>
-        <div class="form-group">
           <label class="form-label">Tratamiento</label>
           <div class="select-wrap">
             <select class="form-select" id="inputService">
               <option value="">Seleccionar…</option>
-              <option value="Masaje Relajante">Masaje Relajante</option>
-              <option value="Masaje Terapéutico">Masaje Terapéutico</option>
-              <option value="Masaje Linfático">Masaje Linfático</option>
-              <option value="Facial">Facial / Limpieza Facial</option>
-              <option value="Maderoterapia">Maderoterapia</option>
-              <option value="Masaje Reductor">Masaje Reductor</option>
-              <option value="Masaje con Ventosas">Masaje con Ventosas</option>
+              <option value="Descontracturante · 30 min · 35€">Descontracturante · 30 min · 35€</option>
+              <option value="Descontracturante · 1 hora · 50€">Descontracturante · 1 hora · 50€</option>
+              <option value="Craneofacial · 30 min · 30€">Craneofacial · 30 min · 30€</option>
+              <option value="Facial Relajante · 30 min · 30€">Facial Relajante · 30 min · 30€</option>
+              <option value="Facial Intrabucal · 30 min · 40€">Facial Intrabucal · 30 min · 40€</option>
+              <option value="Masaje de Manos · 30 min · 30€">Masaje de Manos · 30 min · 30€</option>
+              <option value="Masaje de Pies · 30 min · 30€">Masaje de Pies · 30 min · 30€</option>
+              <option value="Linfáticos Cuerpo Completo · 1h30 · 75€">Linfáticos Cuerpo Completo · 1h30 · 75€</option>
+              <option value="Linfáticos Solo Piernas · 40 min · 55€">Linfáticos Solo Piernas · 40 min · 55€</option>
+              <option value="Reductores · 45 min · 80€">Reductores · 45 min · 80€</option>
+              <option value="Ventosas · 45 min · 40€">Ventosas · 45 min · 40€</option>
+              <option value="Relajantes Completo · 1 hora · 50€">Relajantes Completo · 1 hora · 50€</option>
+              <option value="Deportivos · 40 min · 50€">Deportivos · 40 min · 50€</option>
+              <option value="Spa de Manos · 40 min · 50€">Spa de Manos · 40 min · 50€</option>
+              <option value="Spa de Pies · 40 min · 50€">Spa de Pies · 40 min · 50€</option>
             </select>
           </div>
         </div>
@@ -2015,12 +2223,87 @@
     <div class="booking-success" id="bookingSuccess">
       <div class="check-circle">✓</div>
       <h3>¡Cita solicitada!</h3>
-      <p>Tu solicitud ha sido recibida. Te contactaré por WhatsApp en menos de 2 horas para confirmar la cita.<br><br>Mientras tanto, puedes seguirme en Instagram <a href="https://www.instagram.com/hasu.masajes/" target="_blank" style="color:var(--moss); text-decoration:none;">@hasu.masajes</a></p>
+      <p>Se ha abierto WhatsApp con los datos de tu reserva. Envía el mensaje y te confirmaré la cita lo antes posible.<br><br>Mientras tanto, puedes seguirme en Instagram <a href="https://www.instagram.com/hasu.masajes/" target="_blank" style="color:var(--moss); text-decoration:none;">@hasu.masajes</a></p>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
+<!-- GIFT CARDS -->
+<section class="giftcards" id="regalo">
+  <div class="giftcards-inner">
+    <div class="giftcards-header reveal">
+      <div class="section-divider" style="justify-content:center"><span>Regala bienestar</span></div>
+      <h2 class="section-title">Gift <em>Card</em></h2>
+      <p>El regalo perfecto para quien más querés. Elegí el tratamiento, personalizá el mensaje y coordiná el pago por WhatsApp con Cecilia.</p>
+    </div>
+
+    <div class="giftcard-wrap reveal">
+      <!-- FORMULARIO -->
+      <div class="giftcard-form">
+        <h3>Personalizar tarjeta</h3>
+        <div class="form-group">
+          <label class="form-label">Para quién es el regalo</label>
+          <input type="text" class="form-input" id="gcRecipient" placeholder="Nombre del destinatario">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tratamiento a regalar</label>
+          <div class="select-wrap">
+            <select class="form-select" id="gcService">
+              <option value="">Seleccionar…</option>
+              <option>Descontracturante · 30 min · 35€</option>
+              <option>Descontracturante · 1 hora · 50€</option>
+              <option>Craneofacial · 30 min · 30€</option>
+              <option>Facial Relajante · 30 min · 30€</option>
+              <option>Facial Intrabucal · 30 min · 40€</option>
+              <option>Masaje de Manos · 30 min · 30€</option>
+              <option>Masaje de Pies · 30 min · 30€</option>
+              <option>Linfáticos Cuerpo Completo · 1h30 · 75€</option>
+              <option>Linfáticos Solo Piernas · 40 min · 55€</option>
+              <option>Reductores · 45 min · 80€</option>
+              <option>Ventosas · 45 min · 40€</option>
+              <option>Relajantes Completo · 1 hora · 50€</option>
+              <option>Deportivos · 40 min · 50€</option>
+              <option>Spa de Manos · 40 min · 50€</option>
+              <option>Spa de Pies · 40 min · 50€</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">De parte de</label>
+          <input type="text" class="form-input" id="gcSender" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensaje personal <span style="color:var(--stone)">(opcional)</span></label>
+          <textarea class="form-input" id="gcMessage" placeholder="Ej: Espero que disfrutes este momento de descanso..." rows="3" style="resize:none;font-family:inherit;padding-top:0.7rem;"></textarea>
+        </div>
+        <button class="btn-book" id="gcPreviewBtn" style="margin-top:0.5rem;">Ver tarjeta</button>
+      </div>
+
+      <!-- PREVIEW + ACCIONES -->
+      <div class="giftcard-preview-area">
+        <canvas id="gcCanvas" width="600" height="360"></canvas>
+        <div class="gc-actions" id="gcActions">
+          <button class="btn-book" id="gcWaBtn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Comprar por WhatsApp
+          </button>
+          <button class="gc-download-btn" id="gcDownloadBtn" disabled>Descargar tarjeta (requiere pago)</button>
+          <p class="gc-note">La tarjeta se descarga sin marca de agua una vez que Cecilia confirme el pago.</p>
+          <div class="gc-unlock-wrap">
+            <p>¿Ya abonaste? Ingresá el código que te envió Cecilia para desbloquear la descarga.</p>
+            <div class="gc-unlock-row">
+              <input type="text" id="gcUnlockInput" placeholder="HASU-XXXX" maxlength="9">
+              <button onclick="gcUnlock()">Desbloquear</button>
+            </div>
+            <div class="gc-unlock-msg" id="gcUnlockMsg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="faq" id="faq">
   <div class="faq-inner">
     <div class="section-divider reveal"><span>FAQ</span></div>
@@ -2148,14 +2431,25 @@
 
 <script>
 // HAMBURGER MENU
+let _navScrollY = 0;
 function toggleNav() {
   const links = document.getElementById('navLinks');
   const btn = document.getElementById('navHamburger');
   const overlay = document.getElementById('navOverlay');
-  links.classList.toggle('open');
+  const isOpen = links.classList.toggle('open');
   btn.classList.toggle('open');
   overlay.classList.toggle('open');
-  document.body.style.overflow = links.classList.contains('open') ? 'hidden' : '';
+  if (isOpen) {
+    _navScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_navScrollY}px`;
+    document.body.style.width = '100%';
+  } else {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, _navScrollY);
+  }
 }
 function closeNav() {
   const links = document.getElementById('navLinks');
@@ -2164,7 +2458,10 @@ function closeNav() {
   links.classList.remove('open');
   btn.classList.remove('open');
   overlay.classList.remove('open');
-  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _navScrollY);
 }
 
 // CURSOR
@@ -2258,17 +2555,17 @@ function renderCalendar() {
     const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const isToday = d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-    const isSunday = date.getDay() === 0;
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
     cell.textContent = d;
     cell.className = 'cal-day';
-    if (isPast || isSunday) { cell.classList.add('past'); }
+    if (isPast || isWeekend) { cell.classList.add('past'); }
     else { cell.classList.add('available'); }
     if (isToday) cell.classList.add('today');
     if (bookedSlots[dateStr]) cell.classList.add('has-dot');
     if (selectedDate === dateStr) cell.classList.add('selected');
 
-    if (!isPast && !isSunday) {
+    if (!isPast && !isWeekend) {
       cell.addEventListener('click', () => {
         selectedDate = dateStr;
         selectedTime = null;
@@ -2281,7 +2578,7 @@ function renderCalendar() {
   }
 }
 
-const allSlots = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+const allSlots = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
 
 function showTimeSlots(dateStr) {
   const wrap = document.getElementById('timeSlotsWrap');
@@ -2336,25 +2633,243 @@ renderCalendar();
 // BOOKING SUBMIT
 document.getElementById('btnBook').addEventListener('click', () => {
   const name = document.getElementById('inputName').value.trim();
-  const phone = document.getElementById('inputPhone').value.trim();
   const service = document.getElementById('inputService').value;
 
-  if (!name || !phone || !service || !selectedDate || !selectedTime) {
+  if (!name || !service || !selectedDate || !selectedTime) {
     const missing = [];
     if (!selectedDate) missing.push('una fecha');
     if (!selectedTime) missing.push('un horario');
     if (!name) missing.push('tu nombre');
-    if (!phone) missing.push('tu teléfono');
     if (!service) missing.push('el tratamiento');
     alert(`Por favor completá: ${missing.join(', ')}.`);
     return;
   }
 
-  // In real app: POST to API/WhatsApp webhook
-  // For demo: show success
+  const [y,m,d] = selectedDate.split('-');
+  const note = document.getElementById('inputNote').value.trim();
+  let msg = `Hola Cecilia! 👋 Me gustaría reservar una cita:\n\n📅 Fecha: ${d}/${m}/${y}\n🕐 Hora: ${selectedTime}\n💆 Tratamiento: ${service}\n👤 Nombre: ${name}`;
+  if (note) msg += `\n📝 Nota: ${note}`;
+  msg += `\n\nQuedo a la espera de confirmación. ¡Gracias!`;
+  window.open(`https://wa.me/34615642937?text=${encodeURIComponent(msg)}`, '_blank');
+
   document.getElementById('bookingWrap').style.display = 'none';
   document.getElementById('bookingSuccess').classList.add('visible');
 });
+
+// ===== GIFT CARDS =====
+let gcCurrentCode = null;
+
+document.getElementById('gcPreviewBtn').addEventListener('click', gcGenerate);
+
+function gcGenerate() {
+  const recipient = document.getElementById('gcRecipient').value.trim();
+  const service   = document.getElementById('gcService').value;
+  const sender    = document.getElementById('gcSender').value.trim();
+  const msg       = document.getElementById('gcMessage').value.trim();
+
+  if (!recipient || !service) {
+    alert('Completá al menos el nombre del destinatario y el tratamiento.');
+    return;
+  }
+
+  const code = 'HASU-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+  gcCurrentCode = code;
+
+  const expiry = new Date();
+  expiry.setMonth(expiry.getMonth() + 1);
+  const expiryStr = expiry.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  // Guardar en localStorage para validar el unlock
+  const stored = JSON.parse(localStorage.getItem('gc_codes') || '[]');
+  stored.push({ code, recipient, service, sender, expiry: expiryStr, created: new Date().toISOString() });
+  localStorage.setItem('gc_codes', JSON.stringify(stored));
+
+  // Dibujar con marca de agua para mostrar
+  gcDrawCard(recipient, service, sender, msg, code, expiryStr, true);
+
+  // Mostrar panel de acciones
+  document.getElementById('gcActions').classList.add('visible');
+  document.getElementById('gcUnlockMsg').textContent = '';
+  document.getElementById('gcUnlockInput').value = '';
+  const dlBtn = document.getElementById('gcDownloadBtn');
+  dlBtn.disabled = true;
+  dlBtn.textContent = 'Descargar tarjeta (requiere pago)';
+
+  // Configurar botón WhatsApp
+  document.getElementById('gcWaBtn').onclick = () => {
+    let waMsg = `🎁 Quiero comprar una Gift Card de Hasu Masajes:\n\n💆 Tratamiento: ${service}\n👤 Para: ${recipient}`;
+    if (sender) waMsg += `\n✉️ De parte de: ${sender}`;
+    if (msg)    waMsg += `\n📝 Mensaje: "${msg}"`;
+    waMsg += `\n\n🔑 Código de tarjeta: ${code}\n📅 Válida hasta: ${expiryStr}\n\n¿Me podés confirmar cómo abonar? ¡Gracias! 🙏`;
+    window.open(`https://wa.me/34615642937?text=${encodeURIComponent(waMsg)}`, '_blank');
+  };
+}
+
+function gcDrawCard(recipient, service, sender, msg, code, expiryStr, watermark) {
+  const canvas = document.getElementById('gcCanvas');
+  const ctx    = canvas.getContext('2d');
+  const W = 600, H = 360;
+
+  // Fondo degradé
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0,   '#3D2050');
+  bg.addColorStop(0.6, '#7A4B89');
+  bg.addColorStop(1,   '#2E1A2E');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid sutil
+  ctx.save();
+  ctx.strokeStyle = 'rgba(253,246,249,0.04)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 28) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 28) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  ctx.restore();
+
+  // Círculos decorativos derecha
+  ctx.save();
+  ctx.strokeStyle = 'rgba(253,246,249,0.07)';
+  ctx.lineWidth = 1;
+  [130, 90, 50].forEach(r => { ctx.beginPath(); ctx.arc(W-55, H/2, r, 0, Math.PI*2); ctx.stroke(); });
+  ctx.restore();
+
+  // Barra lateral izquierda
+  const barGrad = ctx.createLinearGradient(0, 40, 0, H-40);
+  barGrad.addColorStop(0,   'rgba(201,122,155,0)');
+  barGrad.addColorStop(0.3, 'rgba(201,122,155,0.7)');
+  barGrad.addColorStop(0.7, 'rgba(201,122,155,0.7)');
+  barGrad.addColorStop(1,   'rgba(201,122,155,0)');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(36, 40, 1.5, H-80);
+
+  // Marca de agua PRIMERO (debajo del texto)
+  if (watermark) {
+    ctx.save();
+    ctx.translate(W/2, H/2);
+    ctx.rotate(-20 * Math.PI / 180);
+    ctx.font = 'bold 46px "DM Sans", system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(253,246,249,0.10)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PENDIENTE DE PAGO', 0, 0);
+    ctx.restore();
+  }
+
+  // Branding
+  ctx.fillStyle = 'rgba(253,246,249,0.45)';
+  ctx.font = '400 10px "DM Sans", system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('蓮  HASU MASAJES', 52, 58);
+
+  ctx.fillStyle = 'rgba(201,155,201,0.65)';
+  ctx.font = '300 8.5px "DM Sans", system-ui, sans-serif';
+  ctx.fillText('GIFT CARD', 52, 74);
+
+  ctx.strokeStyle = 'rgba(253,246,249,0.12)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(52, 84); ctx.lineTo(230, 84); ctx.stroke();
+
+  // "PARA"
+  ctx.fillStyle = 'rgba(253,246,249,0.35)';
+  ctx.font = '300 8px "DM Sans", system-ui, sans-serif';
+  ctx.fillText('PARA', 52, 106);
+
+  // Nombre destinatario
+  ctx.fillStyle = '#FDF6F9';
+  ctx.font = '300 40px "Cormorant Garamond", Georgia, serif';
+  let rText = recipient;
+  while (ctx.measureText(rText).width > 360 && rText.length > 2) rText = rText.slice(0,-1);
+  if (rText !== recipient) rText += '…';
+  ctx.fillText(rText, 52, 150);
+
+  // Tratamiento
+  ctx.fillStyle = 'rgba(191,143,191,0.9)';
+  ctx.font = 'italic 300 15px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(service.split('·')[0].trim(), 52, 174);
+
+  ctx.strokeStyle = 'rgba(253,246,249,0.1)';
+  ctx.beginPath(); ctx.moveTo(52, 187); ctx.lineTo(340, 187); ctx.stroke();
+
+  // Mensaje personal (con word-wrap)
+  let textY = 207;
+  if (msg) {
+    ctx.fillStyle = 'rgba(253,246,249,0.52)';
+    ctx.font = '300 10.5px "DM Sans", system-ui, sans-serif';
+    const words = msg.split(' ');
+    let line = '';
+    for (const word of words) {
+      const test = line + word + ' ';
+      if (ctx.measureText(test).width > 310 && line) {
+        ctx.fillText(line.trim(), 52, textY);
+        line = word + ' ';
+        textY += 15;
+        if (textY > 248) { ctx.fillText('…', 52, textY); break; }
+      } else { line = test; }
+    }
+    if (textY <= 248) ctx.fillText(line.trim(), 52, textY);
+    textY += 22;
+  }
+
+  // Remitente
+  if (sender) {
+    const sy = Math.max(textY, msg ? textY : 218);
+    ctx.fillStyle = 'rgba(253,246,249,0.28)';
+    ctx.font = '300 7.5px "DM Sans", system-ui, sans-serif';
+    ctx.fillText('DE PARTE DE', 52, sy);
+    ctx.fillStyle = 'rgba(253,246,249,0.62)';
+    ctx.font = '300 12px "DM Sans", system-ui, sans-serif';
+    ctx.fillText(sender, 52, sy + 14);
+  }
+
+  // Footer: código + vencimiento
+  ctx.fillStyle = 'rgba(253,246,249,0.2)';
+  ctx.font = '300 7px "DM Sans", system-ui, sans-serif';
+  ctx.fillText(`${code}   ·   Válida hasta ${expiryStr}   ·   Mutxamel, Alicante`, 52, H - 24);
+}
+
+function gcUnlock() {
+  const input  = document.getElementById('gcUnlockInput').value.trim().toUpperCase();
+  const msgEl  = document.getElementById('gcUnlockMsg');
+
+  if (!gcCurrentCode) {
+    msgEl.textContent = 'Primero generá una tarjeta usando el formulario.';
+    msgEl.className = 'gc-unlock-msg err';
+    return;
+  }
+
+  const stored = JSON.parse(localStorage.getItem('gc_codes') || '[]');
+  const match  = stored.find(e => e.code === input);
+
+  if (input === gcCurrentCode || match) {
+    const entry = match || stored.find(e => e.code === gcCurrentCode) || {};
+    gcDrawCard(
+      document.getElementById('gcRecipient').value.trim(),
+      document.getElementById('gcService').value,
+      document.getElementById('gcSender').value.trim(),
+      document.getElementById('gcMessage').value.trim(),
+      input,
+      entry.expiry || '',
+      false  // sin marca de agua
+    );
+    const dlBtn = document.getElementById('gcDownloadBtn');
+    dlBtn.disabled = false;
+    dlBtn.textContent = 'Descargar tarjeta';
+    dlBtn.onclick = gcDownload;
+    msgEl.textContent = '¡Código válido! Ya podés descargar la tarjeta sin marca de agua.';
+    msgEl.className = 'gc-unlock-msg ok';
+  } else {
+    msgEl.textContent = 'Código incorrecto. Revisá bien el mensaje de Cecilia.';
+    msgEl.className = 'gc-unlock-msg err';
+  }
+}
+
+function gcDownload() {
+  const canvas = document.getElementById('gcCanvas');
+  const a = document.createElement('a');
+  a.download = 'hasu-giftcard.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
 </script>
 </body>
 </html>
