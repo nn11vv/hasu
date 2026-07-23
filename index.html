@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hasu · Masajes Terapéuticos</title>
+<meta name="description" content="Hasu Masajes · Quiromasaje terapéutico con Cecilia en Mutxamel, Alicante. El arte de sanar con las manos.">
+
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hasu Masajes">
+<meta property="og:title" content="Hasu · Masajes Terapéuticos">
+<meta property="og:description" content="Quiromasaje terapéutico con Cecilia en Mutxamel, Alicante. El arte de sanar con las manos.">
+<meta property="og:image" content="https://hasumasajes.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://hasumasajes.com/">
+<meta property="og:locale" content="es_ES">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hasu · Masajes Terapéuticos">
+<meta name="twitter:description" content="Quiromasaje terapéutico con Cecilia en Mutxamel, Alicante. El arte de sanar con las manos.">
+<meta name="twitter:image" content="https://hasumasajes.com/og-image.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap" rel="stylesheet">
@@ -3325,6 +3347,44 @@ document.getElementById('btnStripeBono').addEventListener('click', (e) => {
   window.location.href = STRIPE_BONO_LINK;
 });
 
+// ⚠️ REEMPLAZAR con la config real del proyecto Firebase (Consola → Config del proyecto → Tus apps)
+const firebaseConfig = {
+  apiKey: "REEMPLAZAR_API_KEY",
+  authDomain: "REEMPLAZAR_AUTH_DOMAIN",
+  projectId: "REEMPLAZAR_PROJECT_ID",
+  storageBucket: "REEMPLAZAR_STORAGE_BUCKET",
+  messagingSenderId: "REEMPLAZAR_MESSAGING_SENDER_ID",
+  appId: "REEMPLAZAR_APP_ID"
+};
+
+// Guarda el bono recién pagado en Firestore para que admin.html pueda buscarlo por código.
+// Import dinámico (en vez de <script type="module">) para no pelear con el orden de
+// ejecución del resto del script clásico de la página.
+async function saveBonoToFirestore(code, name, phone) {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, doc, setDoc, serverTimestamp, Timestamp } =
+      await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+    await setDoc(doc(db, 'bonos', code), {
+      name,
+      phone,
+      totalSessions: 5,
+      usedSessions: 0,
+      createdAt: serverTimestamp(),
+      expiresAt: Timestamp.fromDate(expiresAt)
+    });
+  } catch (err) {
+    console.error('No se pudo guardar el bono en Firestore:', err);
+  }
+}
+
 // Al volver del pago de Stripe (?bono_paid=1), activar el bono automáticamente
 (function checkBonoReturn(){
   const params = new URLSearchParams(window.location.search);
@@ -3343,6 +3403,8 @@ document.getElementById('btnStripeBono').addEventListener('click', (e) => {
      Código de bono: <strong>${bo.code}</strong><br>
      Guárdalo — Cecilia lo usará para registrar cada sesión que utilices.`;
   document.getElementById('bonoSuccess').classList.add('visible');
+
+  saveBonoToFirestore(bo.code, bo.name, bo.phone);
 
   // Avisar a Cecilia automáticamente por WhatsApp
   const waMsg = `💳✅ Bono de 5 sesiones pagado por Stripe:\n\n👤 Cliente: ${bo.name}\n📱 Teléfono: ${bo.phone}\n🔑 Código: ${bo.code}\n💆 Bono Relajante Completo · 230€\n\n¡Gracias!`;
