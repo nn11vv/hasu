@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bonos de 5 sesiones. Doc ID = código del bono (ej: HASU-BONO-XXXX).
+    match /bonos/{bonoId} {
+
+      // Cualquiera puede leer (el panel admin no requiere login para consultar).
+      allow read: if true;
+
+      // La web pública crea el bono justo después del pago con Stripe.
+      // Solo si el doc todavía no existe y arranca en usedSessions == 0.
+      allow create: if !exists(/databases/$(database)/documents/bonos/$(bonoId))
+                    && request.resource.data.usedSessions == 0;
+
+      // Solo Cecilia (autenticada) puede actualizar, y solo para sumar
+      // una sesión usada por vez. El resto de los campos no puede cambiar.
+      allow update: if request.auth != null
+                    && request.resource.data.usedSessions == resource.data.usedSessions + 1
+                    && request.resource.data.name == resource.data.name
+                    && request.resource.data.phone == resource.data.phone
+                    && request.resource.data.totalSessions == resource.data.totalSessions
+                    && request.resource.data.expiresAt == resource.data.expiresAt
+                    && request.resource.data.createdAt == resource.data.createdAt;
+
+      // Nunca se borran bonos.
+      allow delete: if false;
+    }
+  }
+}

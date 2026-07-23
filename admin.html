@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Hasu · Panel privado</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --cream: #FDF6F9;
+    --sand: #F5E8EF;
+    --stone: #D9AECB;
+    --moss: #9B6B9B;
+    --moss-light: #BF8FBF;
+    --bark: #2E1A2E;
+    --bark-soft: #5C3D5C;
+    --terracotta: #C97A9B;
+    --water: #A89DC8;
+    --white: #FFFAFD;
+    --ink: #1A0F1A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--bark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.2rem;
+  }
+  h1, h2, .brand { font-family: 'Cormorant Garamond', serif; font-weight: 400; }
+
+  /* ---- LOGIN ---- */
+  #loginScreen {
+    width: 100%;
+    max-width: 380px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    padding: 3rem 2.2rem;
+    text-align: center;
+  }
+  .brand {
+    font-size: 1.8rem;
+    letter-spacing: 0.15em;
+    color: var(--bark);
+    margin-bottom: 0.3rem;
+  }
+  .brand-sub {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 2.2rem;
+  }
+  .form-group { margin-bottom: 1.1rem; text-align: left; }
+  .form-label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 0.4rem;
+  }
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--sand);
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--bark);
+    outline: none;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .form-input:focus { border-color: var(--moss); background: var(--white); }
+
+  .btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--bark);
+    color: var(--cream);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 0.4rem;
+  }
+  .btn:hover { background: var(--moss); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn-outline {
+    background: transparent;
+    color: var(--bark-soft);
+    border: 1px solid var(--stone);
+  }
+  .btn-outline:hover { background: var(--sand); color: var(--bark); }
+
+  .error-msg {
+    font-size: 0.78rem;
+    color: var(--terracotta);
+    margin-top: 0.8rem;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* ---- PANEL ---- */
+  #panelScreen { display: none; width: 100%; max-width: 640px; }
+  #panelScreen.visible { display: block; }
+
+  .panel-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.8rem;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .panel-header .brand { font-size: 1.5rem; margin-bottom: 0; }
+  #logoutBtn {
+    width: auto;
+    padding: 0.6rem 1.2rem;
+    margin-top: 0;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--stone);
+    padding: 1.8rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h2 {
+    font-size: 1.15rem;
+    color: var(--bark);
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.02em;
+  }
+
+  .search-row { display: flex; gap: 0.7rem; }
+  .search-row .form-input { text-transform: uppercase; }
+  .search-row .btn { width: auto; padding: 0 1.4rem; margin-top: 0; }
+
+  .bono-result { margin-top: 1.4rem; display: none; }
+  .bono-result.visible { display: block; }
+  .bono-result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--sand);
+    font-size: 0.85rem;
+  }
+  .bono-result-row:last-of-type { border-bottom: none; }
+  .bono-result-row span:first-child { color: var(--bark-soft); }
+  .bono-result-row span:last-child { color: var(--bark); font-weight: 500; text-align: right; }
+
+  .status-pill {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 999px;
+  }
+  .status-pill.active { background: rgba(155,107,155,0.15); color: var(--moss); }
+  .status-pill.expired { background: rgba(201,122,155,0.18); color: var(--terracotta); }
+  .status-pill.agotado { background: rgba(46,26,46,0.1); color: var(--bark-soft); }
+
+  .not-found {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--terracotta);
+    display: none;
+  }
+  .not-found.visible { display: block; }
+
+  .bono-list { list-style: none; }
+  .bono-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--sand);
+    font-size: 0.82rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .bono-list li:last-child { border-bottom: none; }
+  .bono-list .bl-code { font-family: 'DM Sans', sans-serif; color: var(--bark); font-weight: 500; }
+  .bono-list .bl-name { color: var(--bark-soft); }
+  .bono-list .bl-meta { color: var(--stone); font-size: 0.75rem; }
+
+  .empty-note { color: var(--stone); font-size: 0.82rem; }
+  .loading-note { color: var(--stone); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="brand">蓮 HASU</div>
+  <div class="brand-sub">Panel privado</div>
+  <form id="loginForm">
+    <div class="form-group">
+      <label class="form-label" for="loginEmail">Email</label>
+      <input class="form-input" type="email" id="loginEmail" required autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="loginPassword">Contraseña</label>
+      <input class="form-input" type="password" id="loginPassword" required autocomplete="current-password">
+    </div>
+    <button class="btn" type="submit">Entrar</button>
+    <div class="error-msg" id="loginError"></div>
+  </form>
+</div>
+
+<div id="panelScreen">
+  <div class="panel-header">
+    <div class="brand">蓮 HASU · Bonos</div>
+    <button class="btn btn-outline" id="logoutBtn">Cerrar sesión</button>
+  </div>
+
+  <div class="card">
+    <h2>Buscar bono</h2>
+    <div class="search-row">
+      <input class="form-input" id="searchCode" placeholder="HASU-BONO-XXXX">
+      <button class="btn" id="searchBtn">Buscar</button>
+    </div>
+    <div class="not-found" id="notFound">No se encontró ningún bono con ese código.</div>
+
+    <div class="bono-result" id="bonoResult">
+      <div class="bono-result-row"><span>Cliente</span><span id="rName">—</span></div>
+      <div class="bono-result-row"><span>Teléfono</span><span id="rPhone">—</span></div>
+      <div class="bono-result-row"><span>Sesiones</span><span id="rSessions">—</span></div>
+      <div class="bono-result-row"><span>Vence</span><span id="rExpiry">—</span></div>
+      <div class="bono-result-row"><span>Estado</span><span id="rStatus">—</span></div>
+      <button class="btn" id="registerBtn" style="margin-top:1rem;">Registrar sesión usada</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Últimos bonos</h2>
+    <div id="listWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, updateDoc, increment,
+    collection, query, orderBy, limit, getDocs
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  // ⚠️ REEMPLAZAR con la config real del proyecto Firebase (Consola → Config del proyecto → Tus apps)
+  const firebaseConfig = {
+    apiKey: "REEMPLAZAR_API_KEY",
+    authDomain: "REEMPLAZAR_AUTH_DOMAIN",
+    projectId: "REEMPLAZAR_PROJECT_ID",
+    storageBucket: "REEMPLAZAR_STORAGE_BUCKET",
+    messagingSenderId: "REEMPLAZAR_MESSAGING_SENDER_ID",
+    appId: "REEMPLAZAR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const loginScreen = document.getElementById('loginScreen');
+  const panelScreen = document.getElementById('panelScreen');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.classList.remove('visible');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      loginError.textContent = 'Email o contraseña incorrectos.';
+      loginError.classList.add('visible');
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loginScreen.style.display = 'none';
+      panelScreen.classList.add('visible');
+      loadRecentBonos();
+    } else {
+      loginScreen.style.display = 'block';
+      panelScreen.classList.remove('visible');
+    }
+  });
+
+  const TOTAL_SESSIONS = 5;
+
+  function formatDate(timestamp) {
+    if (!timestamp) return '—';
+    const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function bonoStatus(bono) {
+    const now = new Date();
+    const expiry = bono.expiresAt?.toDate ? bono.expiresAt.toDate() : new Date(bono.expiresAt);
+    if (expiry < now) return { label: 'Vencido', cls: 'expired' };
+    if (bono.usedSessions >= (bono.totalSessions || TOTAL_SESSIONS)) return { label: 'Agotado', cls: 'agotado' };
+    return { label: 'Activo', cls: 'active' };
+  }
+
+  let currentCode = null;
+
+  async function searchBono() {
+    const raw = document.getElementById('searchCode').value.trim().toUpperCase();
+    const notFound = document.getElementById('notFound');
+    const result = document.getElementById('bonoResult');
+    notFound.classList.remove('visible');
+    result.classList.remove('visible');
+    if (!raw) return;
+
+    const snap = await getDoc(doc(db, 'bonos', raw));
+    if (!snap.exists()) {
+      notFound.classList.add('visible');
+      currentCode = null;
+      return;
+    }
+
+    const bono = snap.data();
+    currentCode = raw;
+    const total = bono.totalSessions || TOTAL_SESSIONS;
+    const status = bonoStatus(bono);
+
+    document.getElementById('rName').textContent = bono.name || '—';
+    document.getElementById('rPhone').textContent = bono.phone || '—';
+    document.getElementById('rSessions').textContent = `${bono.usedSessions ?? 0} / ${total}`;
+    document.getElementById('rExpiry').textContent = formatDate(bono.expiresAt);
+    document.getElementById('rStatus').innerHTML = `<span class="status-pill ${status.cls}">${status.label}</span>`;
+
+    const registerBtn = document.getElementById('registerBtn');
+    registerBtn.disabled = status.cls !== 'active';
+    registerBtn.textContent = status.cls === 'active' ? 'Registrar sesión usada' : 'Bono no disponible';
+
+    result.classList.add('visible');
+  }
+
+  document.getElementById('searchBtn').addEventListener('click', searchBono);
+  document.getElementById('searchCode').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchBono();
+  });
+
+  document.getElementById('registerBtn').addEventListener('click', async () => {
+    if (!currentCode) return;
+    const btn = document.getElementById('registerBtn');
+    btn.disabled = true;
+    try {
+      await updateDoc(doc(db, 'bonos', currentCode), { usedSessions: increment(1) });
+      await searchBono();
+      loadRecentBonos();
+    } catch (err) {
+      alert('No se pudo registrar la sesión. Intentá de nuevo.');
+      btn.disabled = false;
+    }
+  });
+
+  async function loadRecentBonos() {
+    const listWrap = document.getElementById('listWrap');
+    listWrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const q = query(collection(db, 'bonos'), orderBy('createdAt', 'desc'), limit(10));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        listWrap.innerHTML = '<p class="empty-note">Todavía no hay bonos registrados.</p>';
+        return;
+      }
+      const ul = document.createElement('ul');
+      ul.className = 'bono-list';
+      snap.forEach((d) => {
+        const bono = d.data();
+        const total = bono.totalSessions || TOTAL_SESSIONS;
+        const status = bonoStatus(bono);
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="bl-code">${d.id}</span>
+          <span class="bl-name">${bono.name || '—'}</span>
+          <span class="bl-meta">${bono.usedSessions ?? 0}/${total} · <span class="status-pill ${status.cls}">${status.label}</span></span>
+        `;
+        ul.appendChild(li);
+      });
+      listWrap.innerHTML = '';
+      listWrap.appendChild(ul);
+    } catch (err) {
+      listWrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
+    }
+  }
+</script>
+</body>
+</html>
