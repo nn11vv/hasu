@@ -19,7 +19,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /home/u582471468/domains/hasumasajes.com/public_html/
+          server-dir: /domains/hasumasajes.com/public_html/
           local-dir: ./
           exclude: |
             **/.git*
