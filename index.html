@@ -1310,7 +1310,10 @@
     .nav-close-overlay {
       position: fixed;
       inset: 0;
-      z-index: 1000;
+      /* Debe quedar DEBAJO de <nav> (z-index:1000): son hermanos en el DOM y
+         con el mismo z-index el overlay (por venir después) ganaba el empate,
+         tapando el panel de links y absorbiendo todos los taps del menú mobile. */
+      z-index: 999;
       display: none;
     }
     .nav-close-overlay.open { display: block; }
@@ -1625,13 +1628,13 @@
     <span class="nav-logo-text">Hasu</span>
   </a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#servicios" onclick="closeNav()">Servicios</a></li>
-    <li><a href="#sobre-mi" onclick="closeNav()">Sobre mí</a></li>
-    <li><a href="#testimonios" onclick="closeNav()">Testimonios</a></li>
-    <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
-    <li><a href="#regalo" onclick="closeNav()">Gift Card</a></li>
-    <li><a href="#bonos" onclick="closeNav()">Bonos</a></li>
-    <li><a href="#reservar" class="nav-cta" onclick="closeNav()">Reservar cita</a></li>
+    <li><a href="#servicios" onclick="closeNav(false)">Servicios</a></li>
+    <li><a href="#sobre-mi" onclick="closeNav(false)">Sobre mí</a></li>
+    <li><a href="#testimonios" onclick="closeNav(false)">Testimonios</a></li>
+    <li><a href="#faq" onclick="closeNav(false)">FAQ</a></li>
+    <li><a href="#regalo" onclick="closeNav(false)">Gift Card</a></li>
+    <li><a href="#bonos" onclick="closeNav(false)">Bonos</a></li>
+    <li><a href="#reservar" class="nav-cta" onclick="closeNav(false)">Reservar cita</a></li>
   </ul>
   <button class="nav-hamburger" id="navHamburger" aria-label="Menú" onclick="toggleNav()">
     <span></span><span></span><span></span>
@@ -2931,7 +2934,7 @@ function toggleNav() {
     window.scrollTo(0, _navScrollY);
   }
 }
-function closeNav() {
+function closeNav(restoreScroll = true) {
   const links = document.getElementById('navLinks');
   const btn = document.getElementById('navHamburger');
   const overlay = document.getElementById('navOverlay');
@@ -2939,7 +2942,11 @@ function closeNav() {
   btn.classList.remove('open');
   overlay.classList.remove('open');
   document.body.style.overflow = '';
-  window.scrollTo(0, _navScrollY);
+  // Al cerrar sin elegir un link (overlay/X) restauramos la posición previa.
+  // Al cerrar por click en un link de navegación, NO: dejamos que el navegador
+  // haga su scroll nativo al href="#seccion" — si forzamos scrollTo acá lo pisa
+  // y el menú se cierra sin llevarte a ningún lado.
+  if (restoreScroll) window.scrollTo(0, _navScrollY);
 }
 
 // CURSOR
@@ -3140,11 +3147,13 @@ document.getElementById('btnBook').addEventListener('click', () => {
 
   document.getElementById('bookingWrap').style.display = 'none';
   document.getElementById('bookingDeposit').classList.add('visible');
+  document.getElementById('bookingDeposit').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.getElementById('btnCancelDeposit').addEventListener('click', () => {
   document.getElementById('bookingDeposit').classList.remove('visible');
   document.getElementById('bookingWrap').style.display = 'grid';
+  document.getElementById('bookingWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 // Al volver del pago de Stripe (?deposit_paid=1), completar la reserva automáticamente
@@ -3166,6 +3175,7 @@ document.getElementById('btnCancelDeposit').addEventListener('click', () => {
   document.getElementById('bookingDeposit').classList.remove('visible');
   document.getElementById('bookingWrap').style.display = 'none';
   document.getElementById('bookingSuccess').classList.add('visible');
+  document.getElementById('bookingSuccess').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Intento automático — los navegadores suelen bloquear esto porque no viene
   // de un click directo del usuario. Por eso SIEMPRE mostramos también el botón manual.
