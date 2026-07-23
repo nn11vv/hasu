@@ -26,5 +26,6 @@ jobs:
             **/.git*/**
             **/.claude/**
             **/node_modules/**
+            api/**
             README.md
             *.py
