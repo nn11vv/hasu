@@ -21,6 +21,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: public_html/
           local-dir: ./
+          protocol: ftps
+          port: 21
           dangerous-clean-slate: false
           log-level: standard
           exclude: |
@@ -28,6 +30,6 @@ jobs:
             **/.git*/**
             **/.claude/**
             **/node_modules/**
-            api/**
             README.md
             *.py
+            api/**
