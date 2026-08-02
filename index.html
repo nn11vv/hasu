@@ -942,6 +942,39 @@
   .deposit-notice span { font-size: 0.78rem; line-height: 1.6; }
   .deposit-notice strong { color: var(--bark); }
 
+  /* DEPOSIT WARNING — aviso visible de horario orientativo antes de pagar */
+  .deposit-warning {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    text-align: left;
+    background: #FFF3CD;
+    border: 1px solid #E0A93B;
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    margin: 0 0 1.4rem;
+    color: #6B4E12;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  .deposit-warning strong { color: #4A3300; }
+
+  /* CALENDAR WARNING BANNER — aviso de horarios orientativos */
+  .calendar-warning-banner {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    text-align: left;
+    background: #FFF3CD;
+    border: 1px solid #E0A93B;
+    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.2rem;
+    color: #6B4E12;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
   /* PANEL DE PAGO DE SEÑA */
   .booking-deposit {
     display: none;
@@ -2539,6 +2572,10 @@
     <div class="booking-form-wrap reveal" id="bookingWrap">
       <!-- CALENDAR SIDE -->
       <div class="calendar-wrap">
+        <div class="calendar-warning-banner">
+          <span>📅</span>
+          <span>Los horarios mostrados son orientativos. Tu cita quedará confirmada una vez que Cecilia lo verifique por WhatsApp.</span>
+        </div>
         <h3>Elige una fecha</h3>
         <div class="calendar" id="calendar">
           <div class="cal-header">
@@ -2561,7 +2598,7 @@
         <div class="time-slots-wrap" id="timeSlotsWrap" style="display:none">
           <h4>Horarios disponibles</h4>
           <div class="time-slots" id="timeSlots"></div>
-          <p style="font-size:0.72rem; color:var(--stone); margin-top:1rem; line-height:1.6; letter-spacing:0.03em;">Los horarios son orientativos. Te confirmaré disponibilidad por WhatsApp antes de 2 horas.</p>
+          <p style="font-size:0.72rem; color:var(--stone); margin-top:1rem; line-height:1.6; letter-spacing:0.03em;">Los horarios son orientativos. Cecilia confirmará tu cita por WhatsApp en menos de 2 horas. Si no está disponible, te propondrá una alternativa.</p>
         </div>
       </div>
 
@@ -2605,6 +2642,7 @@
         <div class="booking-summary" id="bookingSummary">
           <strong>Resumen de tu reserva:</strong><br>
           <span id="summaryContent"></span>
+          <p style="font-size:0.72rem; color:#8A5A00; margin-top:0.5rem; font-weight:600;">⚠️ Horario sugerido — pendiente de confirmación</p>
         </div>
 
         <div class="deposit-notice">
@@ -2612,7 +2650,7 @@
           <span>Para confirmar tu cita se requiere una <strong>seña de 15€</strong> (se descuenta del precio final). Cancelaciones con menos de 24h de aviso no son reembolsables.</span>
         </div>
         <button class="btn-book" id="btnBook">Pagar seña y reservar</button>
-        <p class="booking-note">Tras el pago, recibirás la confirmación por WhatsApp en menos de 2 horas.</p>
+        <p class="booking-note">Los horarios son orientativos. Cecilia confirmará tu cita por WhatsApp en menos de 2 horas. Si el horario no está disponible, te propondrá una alternativa.</p>
       </div>
     </div>
 
@@ -2625,6 +2663,10 @@
       <p class="deposit-summary" id="depositSummary"></p>
       <div class="deposit-amount">15€</div>
       <p class="deposit-sub">Se descuenta del precio total de tu sesión</p>
+      <div class="deposit-warning">
+        <span>⚠️</span>
+        <span>El horario es <strong>orientativo</strong>. Cecilia confirmará tu cita por WhatsApp en menos de 2 horas. Si no está disponible, te propondrá una alternativa.</span>
+      </div>
       <a href="#" id="btnStripeDeposit" class="btn-book" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
         Pagar con tarjeta (Stripe)
@@ -2636,8 +2678,8 @@
     <!-- SUCCESS -->
     <div class="booking-success" id="bookingSuccess">
       <div class="check-circle">✓</div>
-      <h3>¡Cita solicitada!</h3>
-      <p id="bookingSuccessText">Se ha abierto WhatsApp con los datos de tu reserva. Envía el mensaje y te confirmaré la cita lo antes posible.</p>
+      <h3>¡Seña recibida!</h3>
+      <p id="bookingSuccessText">Tu seña quedó pagada, pero <strong>tu cita todavía no está confirmada</strong>. Se ha abierto WhatsApp con los datos de tu reserva: envía el mensaje y Cecilia se pondrá en contacto para confirmar el horario o proponerte una alternativa.</p>
       <a href="#" id="btnOpenWaBooking" class="btn-book" style="display:none;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;margin-top:1.2rem;max-width:280px;margin-left:auto;margin-right:auto;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         Enviar confirmación por WhatsApp
@@ -3167,7 +3209,7 @@ document.getElementById('btnCancelDeposit').addEventListener('click', () => {
   const b = JSON.parse(saved);
   let msg = `Hola Cecilia! 👋 Ya aboné la seña de reserva ✅\n\n📅 Fecha: ${b.date}\n🕐 Hora: ${b.time}\n💆 Tratamiento: ${b.service}\n👤 Nombre: ${b.name}`;
   if (b.note) msg += `\n📝 Nota: ${b.note}`;
-  msg += `\n\n💳 Seña de 15€ abonada por Stripe.\nQuedo a la espera de confirmación. ¡Gracias!`;
+  msg += `\n\n💳 Seña de 15€ abonada por Stripe.\n⚠️ Verificar disponibilidad — cliente ya abonó la seña.\nQuedo a la espera de confirmación. ¡Gracias!`;
   const waUrl = `https://wa.me/34615642937?text=${encodeURIComponent(msg)}`;
 
   localStorage.removeItem('hasu_pending_booking');
