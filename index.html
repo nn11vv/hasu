@@ -836,6 +836,13 @@
   }
   .time-slot:hover { background: var(--sand); border-color: var(--stone); }
   .time-slot.selected { background: var(--moss); color: var(--white); border-color: var(--moss); }
+  .time-slots-loading, .time-slots-empty {
+    grid-column: 1 / -1;
+    font-size: 0.8rem;
+    color: var(--bark-soft);
+    padding: 0.6rem 0.2rem;
+    line-height: 1.6;
+  }
 
   /* FORM FIELDS */
   .booking-fields h3 {
@@ -2611,6 +2618,10 @@
           <input type="text" class="form-input" id="inputName" placeholder="Tu nombre">
         </div>
         <div class="form-group">
+          <label class="form-label">Teléfono / WhatsApp</label>
+          <input type="tel" class="form-input" id="inputPhone" placeholder="+34 600 000 000">
+        </div>
+        <div class="form-group">
           <label class="form-label">Tratamiento</label>
           <div class="select-wrap">
             <select class="form-select" id="inputService">
@@ -3100,12 +3111,47 @@ function renderCalendar() {
 
 const allSlots = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
 
-function showTimeSlots(dateStr) {
-  const wrap = document.getElementById('timeSlotsWrap');
-  const container = document.getElementById('timeSlots');
-  wrap.style.display = 'block';
+// Lee bloqueos manuales (colección "horarios") y reservas ya pagadas (colección
+// "reservas") para ese día y devuelve { fullDayBlocked, blockedTimes }.
+// Si Firestore falla, se abre "fail-open" (se muestran todos los horarios) y se
+// confía en el aviso de "Cecilia confirma por WhatsApp" como respaldo — no hay
+// forma de bloquear atómicamente sin backend, así que dos clientas eligiendo el
+// mismo slot casi al mismo tiempo siguen siendo un caso borde posible.
+async function fetchAvailability(dateStr) {
+  const result = { fullDayBlocked: false, blockedTimes: [] };
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, doc, getDoc, collection, query, where, getDocs } =
+      await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const horarioSnap = await getDoc(doc(db, 'horarios', dateStr));
+    if (horarioSnap.exists()) {
+      const h = horarioSnap.data();
+      result.fullDayBlocked = h.fullDayBlocked === true;
+      if (Array.isArray(h.manualBlocked)) result.blockedTimes.push(...h.manualBlocked);
+    }
+
+    if (!result.fullDayBlocked) {
+      const q = query(
+        collection(db, 'reservas'),
+        where('date', '==', dateStr),
+        where('status', '!=', 'cancelada')
+      );
+      const reservasSnap = await getDocs(q);
+      reservasSnap.forEach(d => result.blockedTimes.push(d.data().time));
+    }
+  } catch (err) {
+    console.error('No se pudo comprobar disponibilidad real, se muestran todos los horarios:', err);
+  }
+  return result;
+}
+
+function renderTimeSlotButtons(container, slots) {
   container.innerHTML = '';
-  allSlots.forEach(t => {
+  slots.forEach(t => {
     const btn = document.createElement('button');
     btn.className = 'time-slot';
     btn.textContent = t;
@@ -3118,6 +3164,33 @@ function showTimeSlots(dateStr) {
     });
     container.appendChild(btn);
   });
+}
+
+async function showTimeSlots(dateStr) {
+  const wrap = document.getElementById('timeSlotsWrap');
+  const container = document.getElementById('timeSlots');
+  wrap.style.display = 'block';
+  container.innerHTML = '<p class="time-slots-loading">Comprobando disponibilidad…</p>';
+
+  const { fullDayBlocked, blockedTimes } = await fetchAvailability(dateStr);
+
+  // Si la clienta ya eligió otro día mientras esperábamos la respuesta, esta
+  // respuesta quedó vieja — no pisar lo que se está mostrando ahora.
+  if (selectedDate !== dateStr) return;
+
+  if (fullDayBlocked) {
+    container.innerHTML = '<p class="time-slots-empty">Cecilia no tiene disponibilidad este día. Elegí otra fecha o escribí por WhatsApp.</p>';
+    return;
+  }
+
+  const available = allSlots.filter(t => !blockedTimes.includes(t));
+
+  if (available.length === 0) {
+    container.innerHTML = '<p class="time-slots-empty">No quedan horarios libres este día. Elegí otra fecha.</p>';
+    return;
+  }
+
+  renderTimeSlotButtons(container, available);
 }
 
 function updateSummary() {
@@ -3162,13 +3235,15 @@ const STRIPE_DEPOSIT_LINK = 'https://buy.stripe.com/6oUcN4cGS7gUgyidk3cwg01';
 // BOOKING SUBMIT — paso 1: validar y mostrar pantalla de pago de seña
 document.getElementById('btnBook').addEventListener('click', () => {
   const name = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
   const service = document.getElementById('inputService').value;
 
-  if (!name || !service || !selectedDate || !selectedTime) {
+  if (!name || !phone || !service || !selectedDate || !selectedTime) {
     const missing = [];
     if (!selectedDate) missing.push('una fecha');
     if (!selectedTime) missing.push('un horario');
     if (!name) missing.push('tu nombre');
+    if (!phone) missing.push('tu teléfono');
     if (!service) missing.push('el tratamiento');
     alert(`Por favor completá: ${missing.join(', ')}.`);
     return;
@@ -3178,7 +3253,8 @@ document.getElementById('btnBook').addEventListener('click', () => {
   const note = document.getElementById('inputNote').value.trim();
 
   // Guardar datos de la reserva para recuperarlos después del pago
-  const bookingData = { name, service, date: `${d}/${m}/${y}`, time: selectedTime, note };
+  // (dateISO en formato YYYY-MM-DD, además del date legible, para el doc de Firestore)
+  const bookingData = { name, phone, service, date: `${d}/${m}/${y}`, dateISO: selectedDate, time: selectedTime, note };
   localStorage.setItem('hasu_pending_booking', JSON.stringify(bookingData));
 
   // Mostrar resumen en el panel de pago
@@ -3207,11 +3283,12 @@ document.getElementById('btnCancelDeposit').addEventListener('click', () => {
   if (!saved) return;
 
   const b = JSON.parse(saved);
-  let msg = `Hola Cecilia! 👋 Ya aboné la seña de reserva ✅\n\n📅 Fecha: ${b.date}\n🕐 Hora: ${b.time}\n💆 Tratamiento: ${b.service}\n👤 Nombre: ${b.name}`;
+  let msg = `Hola Cecilia! 👋 Ya aboné la seña de reserva ✅\n\n📅 Fecha: ${b.date}\n🕐 Hora: ${b.time}\n💆 Tratamiento: ${b.service}\n👤 Nombre: ${b.name}\n📱 Teléfono: ${b.phone}`;
   if (b.note) msg += `\n📝 Nota: ${b.note}`;
   msg += `\n\n💳 Seña de 15€ abonada por Stripe.\n⚠️ Verificar disponibilidad — cliente ya abonó la seña.\nQuedo a la espera de confirmación. ¡Gracias!`;
   const waUrl = `https://wa.me/34615642937?text=${encodeURIComponent(msg)}`;
 
+  saveReservaToFirestore(b);
   localStorage.removeItem('hasu_pending_booking');
 
   document.getElementById('bookingDeposit').classList.remove('visible');
@@ -3434,6 +3511,34 @@ async function saveBonoToFirestore(code, name, phone) {
     });
   } catch (err) {
     console.error('No se pudo guardar el bono en Firestore:', err);
+  }
+}
+
+// Guarda la reserva recién pagada en Firestore (colección "reservas") para que
+// el calendario deje de ofrecer ese slot a otras clientas y admin.html la vea
+// en "Reservas pendientes de confirmar".
+async function saveReservaToFirestore(b) {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, collection, addDoc, serverTimestamp } =
+      await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    await addDoc(collection(db, 'reservas'), {
+      date: b.dateISO,
+      time: b.time,
+      name: b.name,
+      phone: b.phone,
+      service: b.service,
+      note: b.note || '',
+      depositPaid: true,
+      status: 'pendiente_confirmacion',
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    console.error('No se pudo guardar la reserva en Firestore:', err);
   }
 }
 

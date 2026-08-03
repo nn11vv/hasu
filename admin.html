@@ -172,6 +172,108 @@
   .status-pill.active { background: rgba(155,107,155,0.15); color: var(--moss); }
   .status-pill.expired { background: rgba(201,122,155,0.18); color: var(--terracotta); }
   .status-pill.agotado { background: rgba(46,26,46,0.1); color: var(--bark-soft); }
+  .status-pill.pendiente { background: rgba(224,169,59,0.2); color: #8A5A00; }
+  .status-pill.confirmada { background: rgba(155,107,155,0.15); color: var(--moss); }
+  .status-pill.cancelada { background: rgba(201,122,155,0.18); color: var(--terracotta); }
+
+  /* ---- CALENDARIO ---- */
+  .slot-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+  @media (max-width: 480px) {
+    .slot-toggle-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .slot-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    position: relative;
+    min-height: 2.7rem;
+    padding: 0.55rem 0.35rem;
+    border: 1px solid var(--stone);
+    background: var(--cream);
+    color: var(--bark-soft);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .slot-toggle.blocked { background: var(--terracotta); color: var(--white); border-color: var(--terracotta); }
+  .slot-toggle-time { font-size: 0.78rem; line-height: 1.2; }
+  .slot-toggle-label {
+    max-width: 100%;
+    padding: 0 0.9rem;
+    font-size: 0.6rem;
+    line-height: 1.2;
+    color: rgba(255,255,255,0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .slot-toggle-edit {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.65rem;
+    line-height: 1;
+    padding: 2px;
+    color: rgba(255,255,255,0.75);
+    cursor: pointer;
+  }
+  .slot-toggle-edit:hover { color: var(--white); }
+
+  .slot-label-editor {
+    margin-top: 0.9rem;
+    padding: 0.8rem;
+    background: var(--cream);
+    border: 1px solid var(--stone);
+    border-radius: 2px;
+  }
+  .slot-label-editor .form-label { margin-bottom: 0.5rem; }
+  .slot-label-editor-row { display: flex; gap: 0.5rem; }
+  .slot-label-editor-row .form-input { flex: 1; }
+  .slot-label-confirm {
+    flex-shrink: 0;
+    width: 2.6rem;
+    background: var(--moss);
+    color: var(--white);
+    border: none;
+    border-radius: 2px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slot-label-confirm:hover { background: var(--moss-light); }
+
+  .fullday-toggle-row { margin: 1.2rem 0 0.4rem; }
+  .fullday-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--bark-soft);
+    cursor: pointer;
+  }
+  .fullday-toggle input { width: 16px; height: 16px; accent-color: var(--moss); cursor: pointer; }
+
+  .cal-save-note { font-size: 0.78rem; margin-top: 0.8rem; min-height: 1.1em; }
+
+  .reserva-list { list-style: none; }
+  .reserva-list li { padding: 0.9rem 0; border-bottom: 1px solid var(--sand); font-size: 0.82rem; }
+  .reserva-list li:last-child { border-bottom: none; }
+  .reserva-row-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .reserva-name { color: var(--bark); font-weight: 500; }
+  .reserva-meta { color: var(--stone); font-size: 0.75rem; margin-top: 0.2rem; }
+  .reserva-actions { display: flex; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
+  .reserva-actions .btn { width: auto; padding: 0.55rem 1.1rem; margin-top: 0; font-size: 0.65rem; }
+  .btn-danger { background: var(--terracotta); }
+  .btn-danger:hover { background: #a85c78; }
 
   .not-found {
     margin-top: 1rem;
@@ -248,6 +350,43 @@
     <h2>Últimos bonos</h2>
     <div id="listWrap"><p class="loading-note">Cargando…</p></div>
   </div>
+
+  <div class="card">
+    <h2>Calendario</h2>
+    <div class="form-group">
+      <label class="form-label" for="calDate">Fecha</label>
+      <input class="form-input" type="date" id="calDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Horarios bloqueados manualmente</label>
+      <div class="slot-toggle-grid" id="slotToggleGrid"></div>
+      <div class="slot-label-editor" id="slotLabelEditor" style="display:none;">
+        <label class="form-label" id="slotLabelEditorFor">Referencia</label>
+        <div class="slot-label-editor-row">
+          <input type="text" class="form-input" id="slotLabelInput" placeholder="Referencia (opcional)" maxlength="60">
+          <button type="button" class="slot-label-confirm" id="slotLabelConfirm" title="Confirmar">✓</button>
+        </div>
+      </div>
+    </div>
+    <div class="fullday-toggle-row">
+      <label class="fullday-toggle">
+        <input type="checkbox" id="fullDayToggle">
+        <span>Bloquear día completo (vacaciones / feriado)</span>
+      </label>
+    </div>
+    <button class="btn" id="saveCalBtn">Guardar</button>
+    <p class="cal-save-note" id="calSaveNote"></p>
+  </div>
+
+  <div class="card">
+    <h2>Reservas pendientes de confirmar</h2>
+    <div id="reservasWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Próximas reservas confirmadas</h2>
+    <div id="confirmedWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
 </div>
 
 <script type="module">
@@ -256,8 +395,8 @@
     getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, updateDoc, increment,
-    collection, query, orderBy, limit, getDocs
+    getFirestore, doc, getDoc, setDoc, updateDoc, increment,
+    collection, query, where, orderBy, limit, getDocs, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   // ⚠️ REEMPLAZAR con la config real del proyecto Firebase (Consola → Config del proyecto → Tus apps)
@@ -299,6 +438,9 @@
       loginScreen.style.display = 'none';
       panelScreen.classList.add('visible');
       loadRecentBonos();
+      loadCalDay();
+      loadPendingReservas();
+      loadConfirmedReservas();
     } else {
       loginScreen.style.display = 'block';
       panelScreen.classList.remove('visible');
@@ -403,6 +545,289 @@
       listWrap.appendChild(ul);
     } catch (err) {
       listWrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
+    }
+  }
+
+  // ===== CALENDARIO =====
+  const CAL_ALL_SLOTS = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+  // hora -> texto de referencia libre (solo tiene entrada si la hora está bloqueada)
+  let calBlockedMap = new Map();
+  // hora que está siendo editada en el editor inline (null = editor cerrado)
+  let calEditingSlot = null;
+
+  function openSlotLabelEditor(t) {
+    calEditingSlot = t;
+    document.getElementById('slotLabelEditorFor').textContent = `Referencia para ${t}`;
+    const input = document.getElementById('slotLabelInput');
+    input.value = calBlockedMap.get(t) || '';
+    document.getElementById('slotLabelEditor').style.display = 'block';
+    input.focus();
+  }
+
+  function closeSlotLabelEditor() {
+    calEditingSlot = null;
+    document.getElementById('slotLabelEditor').style.display = 'none';
+  }
+
+  function confirmSlotLabel() {
+    if (!calEditingSlot) return;
+    const input = document.getElementById('slotLabelInput');
+    calBlockedMap.set(calEditingSlot, input.value.trim());
+    closeSlotLabelEditor();
+    renderSlotToggles();
+  }
+
+  document.getElementById('slotLabelConfirm').addEventListener('click', confirmSlotLabel);
+  document.getElementById('slotLabelInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmSlotLabel(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeSlotLabelEditor(); }
+  });
+
+  function renderSlotToggles() {
+    const grid = document.getElementById('slotToggleGrid');
+    grid.innerHTML = '';
+    CAL_ALL_SLOTS.forEach(t => {
+      const isBlocked = calBlockedMap.has(t);
+      const label = calBlockedMap.get(t) || '';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-toggle' + (isBlocked ? ' blocked' : '');
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'slot-toggle-time';
+      timeSpan.textContent = t;
+      btn.appendChild(timeSpan);
+
+      if (isBlocked && label) {
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'slot-toggle-label';
+        labelSpan.title = label;
+        labelSpan.textContent = label;
+        btn.appendChild(labelSpan);
+      }
+
+      if (isBlocked) {
+        const editSpan = document.createElement('span');
+        editSpan.className = 'slot-toggle-edit';
+        editSpan.textContent = '✎';
+        editSpan.title = 'Editar referencia';
+        editSpan.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openSlotLabelEditor(t);
+        });
+        btn.appendChild(editSpan);
+      }
+
+      btn.addEventListener('click', () => {
+        if (calBlockedMap.has(t)) {
+          calBlockedMap.delete(t);
+          if (calEditingSlot === t) closeSlotLabelEditor();
+          renderSlotToggles();
+        } else {
+          calBlockedMap.set(t, '');
+          renderSlotToggles();
+          openSlotLabelEditor(t);
+        }
+      });
+
+      grid.appendChild(btn);
+    });
+  }
+
+  async function loadCalDay() {
+    const dateInput = document.getElementById('calDate');
+    if (!dateInput.value) {
+      const d = new Date();
+      dateInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    const dateStr = dateInput.value;
+    const note = document.getElementById('calSaveNote');
+    note.textContent = '';
+    calBlockedMap = new Map();
+    closeSlotLabelEditor();
+    document.getElementById('fullDayToggle').checked = false;
+
+    try {
+      const snap = await getDoc(doc(db, 'horarios', dateStr));
+      if (snap.exists()) {
+        const h = snap.data();
+        const labels = (h.manualLabels && typeof h.manualLabels === 'object') ? h.manualLabels : {};
+        if (Array.isArray(h.manualBlocked)) {
+          calBlockedMap = new Map(h.manualBlocked.map(t => [t, labels[t] || '']));
+        }
+        document.getElementById('fullDayToggle').checked = h.fullDayBlocked === true;
+      }
+    } catch (err) {
+      note.style.color = 'var(--terracotta)';
+      note.textContent = 'No se pudo cargar el estado de este día.';
+    }
+    renderSlotToggles();
+  }
+
+  document.getElementById('calDate').addEventListener('change', loadCalDay);
+
+  document.getElementById('saveCalBtn').addEventListener('click', async () => {
+    const dateStr = document.getElementById('calDate').value;
+    const note = document.getElementById('calSaveNote');
+    if (!dateStr) {
+      note.style.color = 'var(--terracotta)';
+      note.textContent = 'Elegí una fecha primero.';
+      return;
+    }
+    // Si quedó una referencia tipeada sin confirmar en el editor inline, guardarla igual.
+    if (calEditingSlot) {
+      calBlockedMap.set(calEditingSlot, document.getElementById('slotLabelInput').value.trim());
+      closeSlotLabelEditor();
+      renderSlotToggles();
+    }
+
+    const btn = document.getElementById('saveCalBtn');
+    btn.disabled = true;
+    const manualLabels = {};
+    calBlockedMap.forEach((label, time) => { if (label) manualLabels[time] = label; });
+
+    try {
+      await setDoc(doc(db, 'horarios', dateStr), {
+        manualBlocked: Array.from(calBlockedMap.keys()),
+        manualLabels,
+        fullDayBlocked: document.getElementById('fullDayToggle').checked,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      note.style.color = 'var(--moss)';
+      note.textContent = 'Guardado.';
+      setTimeout(() => { if (note.textContent === 'Guardado.') note.textContent = ''; }, 3000);
+    } catch (err) {
+      note.style.color = 'var(--terracotta)';
+      note.textContent = 'No se pudo guardar. Intentá de nuevo.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ===== RESERVAS PENDIENTES =====
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  async function loadPendingReservas() {
+    const wrap = document.getElementById('reservasWrap');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const q = query(collection(db, 'reservas'), where('status', '==', 'pendiente_confirmacion'));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        wrap.innerHTML = '<p class="empty-note">No hay reservas pendientes de confirmar.</p>';
+        return;
+      }
+      const reservas = [];
+      snap.forEach((d) => reservas.push({ id: d.id, ...d.data() }));
+      // Ordenar en cliente (fecha+hora) para no depender de un índice compuesto en Firestore.
+      reservas.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+
+      const ul = document.createElement('ul');
+      ul.className = 'reserva-list';
+      reservas.forEach((r) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="reserva-row-top">
+            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(r.time)}</span>
+            <span class="status-pill pendiente">Pendiente</span>
+          </div>
+          <div>${escapeHtml(r.name) || '—'} · ${escapeHtml(r.phone) || '—'}</div>
+          <div class="reserva-meta">${escapeHtml(r.service)}${r.note ? ' · ' + escapeHtml(r.note) : ''}</div>
+          <div class="reserva-actions">
+            <button class="btn" data-action="confirmar" data-id="${r.id}">Confirmar</button>
+            <button class="btn btn-danger" data-action="cancelar" data-id="${r.id}">Cancelar</button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+      wrap.innerHTML = '';
+      wrap.appendChild(ul);
+
+      wrap.querySelectorAll('button[data-action]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const newStatus = btn.dataset.action === 'confirmar' ? 'confirmada' : 'cancelada';
+          wrap.querySelectorAll('button[data-action]').forEach((b) => b.disabled = true);
+          try {
+            await updateDoc(doc(db, 'reservas', id), { status: newStatus });
+            loadPendingReservas();
+            loadConfirmedReservas();
+          } catch (err) {
+            alert('No se pudo actualizar la reserva. Intentá de nuevo.');
+            wrap.querySelectorAll('button[data-action]').forEach((b) => b.disabled = false);
+          }
+        });
+      });
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
+    }
+  }
+
+  // ===== PRÓXIMAS RESERVAS CONFIRMADAS =====
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  async function loadConfirmedReservas() {
+    const wrap = document.getElementById('confirmedWrap');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const q = query(collection(db, 'reservas'), where('status', '==', 'confirmada'));
+      const snap = await getDocs(q);
+      const today = todayStr();
+      const reservas = [];
+      snap.forEach((d) => {
+        const r = { id: d.id, ...d.data() };
+        if (r.date >= today) reservas.push(r);
+      });
+      if (reservas.length === 0) {
+        wrap.innerHTML = '<p class="empty-note">No hay próximas reservas confirmadas.</p>';
+        return;
+      }
+      // Ordenar en cliente (fecha+hora) para no depender de un índice compuesto en Firestore.
+      reservas.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+
+      const ul = document.createElement('ul');
+      ul.className = 'reserva-list';
+      reservas.forEach((r) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="reserva-row-top">
+            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(r.time)}</span>
+            <span class="status-pill confirmada">Confirmada</span>
+          </div>
+          <div>${escapeHtml(r.name) || '—'} · ${escapeHtml(r.phone) || '—'}</div>
+          <div class="reserva-meta">${escapeHtml(r.service)}${r.note ? ' · ' + escapeHtml(r.note) : ''}</div>
+          <div class="reserva-actions">
+            <button class="btn btn-danger" data-id="${r.id}">Cancelar</button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+      wrap.innerHTML = '';
+      wrap.appendChild(ul);
+
+      wrap.querySelectorAll('button[data-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          wrap.querySelectorAll('button[data-id]').forEach((b) => b.disabled = true);
+          try {
+            await updateDoc(doc(db, 'reservas', id), { status: 'cancelada' });
+            loadConfirmedReservas();
+          } catch (err) {
+            alert('No se pudo cancelar la reserva. Intentá de nuevo.');
+            wrap.querySelectorAll('button[data-id]').forEach((b) => b.disabled = false);
+          }
+        });
+      });
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
     }
   }
 </script>

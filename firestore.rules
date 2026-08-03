@@ -27,5 +27,49 @@ service cloud.firestore {
       // Nunca se borran bonos.
       allow delete: if false;
     }
+
+    // Bloqueos manuales de Cecilia por día. Doc ID = fecha "YYYY-MM-DD".
+    match /horarios/{fecha} {
+
+      // La landing pública necesita leer disponibilidad sin login.
+      allow read: if true;
+
+      // Solo Cecilia autenticada bloquea/desbloquea horarios o días.
+      allow write: if request.auth != null;
+    }
+
+    // Reservas con seña pagada. Doc ID autogenerado.
+    match /reservas/{reservaId} {
+
+      // Necesario para calcular slots ocupados sin login.
+      allow read: if true;
+
+      // La web pública crea la reserva justo después del pago de la seña
+      // (mismo patrón de confianza que ya usa /bonos). Se valida forma
+      // mínima para evitar que se creen documentos basura que bloqueen
+      // horarios sin datos reales de una clienta.
+      allow create: if request.resource.data.depositPaid == true
+                    && request.resource.data.status == 'pendiente_confirmacion'
+                    && request.resource.data.date is string
+                    && request.resource.data.time is string
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.phone is string
+                    && request.resource.data.phone.size() > 0
+                    && request.resource.data.service is string;
+
+      // Solo Cecilia (autenticada) puede tocar el estado. El resto de
+      // los campos identificatorios no puede cambiar.
+      allow update: if request.auth != null
+                    && request.resource.data.date == resource.data.date
+                    && request.resource.data.time == resource.data.time
+                    && request.resource.data.name == resource.data.name
+                    && request.resource.data.phone == resource.data.phone
+                    && (request.resource.data.status == 'confirmada'
+                        || request.resource.data.status == 'cancelada'
+                        || request.resource.data.status == 'pendiente_confirmacion');
+
+      allow delete: if false;
+    }
   }
 }
