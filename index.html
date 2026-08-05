@@ -2658,7 +2658,7 @@
 
         <div class="deposit-notice">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Para confirmar tu cita se requiere una <strong>seña de 15€</strong> (se descuenta del precio final). Cancelaciones con menos de 24h de aviso no son reembolsables.</span>
+          <span>Para confirmar tu cita se requiere una <strong>seña de 15€</strong> (se descuenta del precio final). La seña no es reembolsable ante cancelaciones.</span>
         </div>
         <button class="btn-book" id="btnBook">Pagar seña y reservar</button>
         <p class="booking-note">Los horarios son orientativos. Cecilia confirmará tu cita por WhatsApp en menos de 2 horas. Si el horario no está disponible, te propondrá una alternativa.</p>
@@ -2791,7 +2791,7 @@
         <ul class="bono-features">
           <li>5 sesiones de 1 hora cada una</li>
           <li>Aceites esenciales incluidos</li>
-          <li>Válido durante 6 meses desde la compra</li>
+          <li>Válido durante 3 meses desde la compra</li>
           <li>Reservas flexibles, una sesión a la vez</li>
         </ul>
         <span class="summer-badge">🌞 También disponible: Craneofacial 1h por 50€ — oferta de verano</span>
@@ -2857,11 +2857,11 @@
       </div>
       <div class="faq-item reveal">
         <button class="faq-question">
-          ¿Con cuánta antelación puedo cancelar?
+          ¿Puedo cancelar o reprogramar mi cita?
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
-          <p>Puedes cancelar o reprogramar hasta 24 horas antes sin coste. Pasado ese plazo, la <strong>seña de 15€ no es reembolsable</strong>, ya que reserva el espacio y el tiempo dedicado a tu sesión.</p>
+          <p>La <strong>seña de 15€ no es reembolsable en ningún caso</strong>, ya que reserva el espacio y el tiempo dedicado a tu sesión. Si necesitas cambiar el día u horario, escríbenos por WhatsApp y con gusto te ayudamos a reprogramar.</p>
         </div>
       </div>
       <div class="faq-item reveal">
@@ -3499,7 +3499,7 @@ async function saveBonoToFirestore(code, name, phone) {
     const db = getFirestore(app);
 
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    expiresAt.setMonth(expiresAt.getMonth() + 3);
 
     await setDoc(doc(db, 'bonos', code), {
       name,
