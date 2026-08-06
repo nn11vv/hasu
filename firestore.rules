@@ -71,5 +71,40 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // Gift Cards. Doc ID = código de la gift card (ej: HASU-XXXX).
+    match /giftcards/{giftcardId} {
+
+      // Cualquiera puede leer (el panel admin no requiere login para consultar).
+      allow read: if true;
+
+      // La web pública crea la gift card justo después del pago con Stripe
+      // (mismo patrón de confianza que ya usa /bonos y /reservas).
+      allow create: if !exists(/databases/$(database)/documents/giftcards/$(giftcardId))
+                    && request.resource.data.recipient is string
+                    && request.resource.data.recipient.size() > 0
+                    && request.resource.data.service is string
+                    && request.resource.data.service.size() > 0
+                    && request.resource.data.price is number
+                    && request.resource.data.redeemed == false
+                    && request.resource.data.createdAt != null
+                    && request.resource.data.expiresAt != null;
+
+      // Solo Cecilia (autenticada) puede actualizar, y solo para marcar la
+      // gift card como usada (false -> true). El resto de los campos no
+      // puede cambiar.
+      allow update: if request.auth != null
+                    && resource.data.redeemed == false
+                    && request.resource.data.redeemed == true
+                    && request.resource.data.recipient == resource.data.recipient
+                    && request.resource.data.service == resource.data.service
+                    && request.resource.data.sender == resource.data.sender
+                    && request.resource.data.message == resource.data.message
+                    && request.resource.data.price == resource.data.price
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && request.resource.data.expiresAt == resource.data.expiresAt;
+
+      allow delete: if false;
+    }
   }
 }

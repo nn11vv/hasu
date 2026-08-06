@@ -337,6 +337,7 @@
   .month-list .ml-name { font-family: 'DM Sans', sans-serif; color: var(--bark); font-weight: 500; }
   .month-list .ml-type { color: var(--bark-soft); }
   .month-list .ml-meta { color: var(--stone); font-size: 0.75rem; }
+  .mismatch-note { font-size: 0.75rem; color: var(--stone); margin-top: 0.9rem; }
 </style>
 </head>
 <body>
@@ -372,6 +373,7 @@
   <div class="card">
     <h2>Este mes</h2>
     <div id="monthSummaryWrap"><p class="loading-note">Cargando…</p></div>
+    <p class="mismatch-note" id="monthMismatchNote"></p>
   </div>
 
   <div class="card">
@@ -389,6 +391,25 @@
       <div class="bono-result-row"><span>Vence</span><span id="rExpiry">—</span></div>
       <div class="bono-result-row"><span>Estado</span><span id="rStatus">—</span></div>
       <button class="btn" id="registerBtn" style="margin-top:1rem;">Registrar sesión usada</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Buscar Gift Card</h2>
+    <div class="search-row">
+      <input class="form-input" id="gcSearchCode" placeholder="HASU-XXXX">
+      <button class="btn" id="gcSearchBtn">Buscar</button>
+    </div>
+    <div class="not-found" id="gcNotFound">No se encontró ninguna gift card con ese código.</div>
+
+    <div class="bono-result" id="gcResult">
+      <div class="bono-result-row"><span>Destinatario</span><span id="gcrRecipient">—</span></div>
+      <div class="bono-result-row"><span>Remitente</span><span id="gcrSender">—</span></div>
+      <div class="bono-result-row"><span>Tratamiento</span><span id="gcrService">—</span></div>
+      <div class="bono-result-row"><span>Precio</span><span id="gcrPrice">—</span></div>
+      <div class="bono-result-row"><span>Vence</span><span id="gcrExpiry">—</span></div>
+      <div class="bono-result-row"><span>Estado</span><span id="gcrStatus">—</span></div>
+      <button class="btn" id="gcMarkUsedBtn" style="margin-top:1rem;">Marcar como usada</button>
     </div>
   </div>
 
@@ -499,6 +520,23 @@
   const RESERVA_PRICE = 15;
   const BONO_PRICE = 230;
 
+  // ===== COMPARACION STRIPE vs FIRESTORE (mensual) =====
+  let stripeMonthlyCount = null;
+  let firestoreMonthlyCount = null;
+
+  function checkMonthlyMismatch() {
+    const note = document.getElementById('monthMismatchNote');
+    if (stripeMonthlyCount === null || firestoreMonthlyCount === null) {
+      note.textContent = '';
+      return;
+    }
+    if (stripeMonthlyCount !== firestoreMonthlyCount) {
+      note.textContent = `Nota: Stripe registra ${stripeMonthlyCount} pagos este mes, Firestore registra ${firestoreMonthlyCount} reservas/bonos. Puede haber Gift Cards de por medio, o algo que revisar.`;
+    } else {
+      note.textContent = '';
+    }
+  }
+
   function formatDate(timestamp) {
     if (!timestamp) return '—';
     const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -567,6 +605,68 @@
     }
   });
 
+  // ===== GIFT CARDS =====
+  function giftcardStatus(gc) {
+    if (gc.redeemed === true) return { label: 'Usada', cls: 'agotado' };
+    const now = new Date();
+    const expiry = gc.expiresAt?.toDate ? gc.expiresAt.toDate() : new Date(gc.expiresAt);
+    if (expiry < now) return { label: 'Vencida', cls: 'expired' };
+    return { label: 'Activa', cls: 'active' };
+  }
+
+  let currentGiftcardCode = null;
+
+  async function searchGiftcard() {
+    const raw = document.getElementById('gcSearchCode').value.trim().toUpperCase();
+    const notFound = document.getElementById('gcNotFound');
+    const result = document.getElementById('gcResult');
+    notFound.classList.remove('visible');
+    result.classList.remove('visible');
+    if (!raw) return;
+
+    const snap = await getDoc(doc(db, 'giftcards', raw));
+    if (!snap.exists()) {
+      notFound.classList.add('visible');
+      currentGiftcardCode = null;
+      return;
+    }
+
+    const gc = snap.data();
+    currentGiftcardCode = raw;
+    const status = giftcardStatus(gc);
+
+    document.getElementById('gcrRecipient').textContent = gc.recipient || '—';
+    document.getElementById('gcrSender').textContent = gc.sender || '—';
+    document.getElementById('gcrService').textContent = gc.service || '—';
+    document.getElementById('gcrPrice').textContent = (typeof gc.price === 'number') ? `${gc.price}€` : '—';
+    document.getElementById('gcrExpiry').textContent = formatDate(gc.expiresAt);
+    document.getElementById('gcrStatus').innerHTML = `<span class="status-pill ${status.cls}">${status.label}</span>`;
+
+    const markBtn = document.getElementById('gcMarkUsedBtn');
+    markBtn.disabled = status.cls !== 'active';
+    markBtn.textContent = status.cls === 'active' ? 'Marcar como usada' : (status.label === 'Usada' ? 'Ya usada' : 'Gift card vencida');
+
+    result.classList.add('visible');
+  }
+
+  document.getElementById('gcSearchBtn').addEventListener('click', searchGiftcard);
+  document.getElementById('gcSearchCode').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchGiftcard();
+  });
+
+  document.getElementById('gcMarkUsedBtn').addEventListener('click', async () => {
+    if (!currentGiftcardCode) return;
+    const btn = document.getElementById('gcMarkUsedBtn');
+    btn.disabled = true;
+    try {
+      await updateDoc(doc(db, 'giftcards', currentGiftcardCode), { redeemed: true });
+      await searchGiftcard();
+    } catch (err) {
+      alert('No se pudo marcar la gift card como usada. Intentá de nuevo.');
+      btn.disabled = false;
+    }
+  });
+
   async function loadRecentBonos() {
     const listWrap = document.getElementById('listWrap');
     listWrap.innerHTML = '<p class="loading-note">Cargando…</p>';
@@ -610,6 +710,9 @@
       if (!res.ok) throw new Error('bad response');
       const data = await res.json();
 
+      stripeMonthlyCount = (data.monthly && typeof data.monthly.count === 'number') ? data.monthly.count : null;
+      checkMonthlyMismatch();
+
       const summaryHtml = data.monthly && data.monthly.count > 0
         ? `<p class="stripe-summary"><strong>${data.monthly.count}</strong> pagos · <strong>${data.monthly.total.toFixed(2)}€</strong> este mes</p>`
         : `<p class="stripe-summary">Sin pagos este mes.</p>`;
@@ -646,11 +749,23 @@
 
       const reservasQ = query(collection(db, 'reservas'), where('createdAt', '>=', monthStartTs));
       const bonosQ = query(collection(db, 'bonos'), where('createdAt', '>=', monthStartTs));
-      const [reservasSnap, bonosSnap] = await Promise.all([getDocs(reservasQ), getDocs(bonosQ)]);
+      const giftcardsQ = query(collection(db, 'giftcards'), where('createdAt', '>=', monthStartTs));
+      const [reservasSnap, bonosSnap, giftcardsSnap] = await Promise.all([getDocs(reservasQ), getDocs(bonosQ), getDocs(giftcardsQ)]);
 
       const reservasCount = reservasSnap.size;
       const bonosCount = bonosSnap.size;
-      const total = reservasCount * RESERVA_PRICE + bonosCount * BONO_PRICE;
+      const giftcardsCount = giftcardsSnap.size;
+
+      let giftcardsTotal = 0;
+      giftcardsSnap.forEach((d) => {
+        const gc = d.data();
+        giftcardsTotal += (typeof gc.price === 'number') ? gc.price : 0;
+      });
+
+      const total = reservasCount * RESERVA_PRICE + bonosCount * BONO_PRICE + giftcardsTotal;
+
+      firestoreMonthlyCount = reservasCount + bonosCount + giftcardsCount;
+      checkMonthlyMismatch();
 
       const items = [];
       reservasSnap.forEach((d) => {
@@ -661,6 +776,10 @@
         const b = d.data();
         items.push({ createdAt: b.createdAt, name: b.name, phone: b.phone, type: 'Bono 5 sesiones' });
       });
+      giftcardsSnap.forEach((d) => {
+        const g = d.data();
+        items.push({ createdAt: g.createdAt, name: g.recipient, phone: g.sender, type: `Gift Card - ${g.service || ''}` });
+      });
       items.sort((a, b) => {
         const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
         const bt = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -668,8 +787,8 @@
       });
       const top10 = items.slice(0, 10);
 
-      const summaryHtml = (reservasCount > 0 || bonosCount > 0)
-        ? `<p class="month-summary">${reservasCount} reservas (15€ c/u) + ${bonosCount} bonos (230€ c/u) · <strong>${total}€</strong> este mes</p>`
+      const summaryHtml = (reservasCount > 0 || bonosCount > 0 || giftcardsCount > 0)
+        ? `<p class="month-summary">${reservasCount} reservas (15€ c/u) + ${bonosCount} bonos (230€ c/u) + ${giftcardsCount} gift cards (${giftcardsTotal}€) · <strong>${total}€</strong> este mes</p>`
         : '';
 
       let listHtml;

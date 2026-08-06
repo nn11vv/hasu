@@ -3420,6 +3420,10 @@ function gcGenerate() {
   // Descarga automática inmediata — el cliente no tiene que hacer nada más
   setTimeout(gcDownload, 600);
 
+  // Guardar en Firestore para trazabilidad y poder marcarla como usada desde el panel admin.
+  // No bloquea la descarga ni el aviso de WhatsApp si falla (ver catch interno).
+  saveGiftcardToFirestore(g, Number(gcExtractPrice(g.service)));
+
   // Avisar a Cecilia automáticamente por WhatsApp (solo notificación, no requiere acción de ella)
   let waMsg = `🎁✅ Gift Card pagada por Stripe:\n\n💆 Tratamiento: ${g.service}\n👤 Para: ${g.recipient}`;
   if (g.sender) waMsg += `\n✉️ De parte de: ${g.sender}`;
@@ -3485,6 +3489,36 @@ const firebaseConfig = {
   messagingSenderId: "983004833838",
   appId: "1:983004833838:web:58ec9c0824eabc5a4957bf"
 };
+
+// Guarda la gift card recién pagada en Firestore para que admin.html pueda buscarla por
+// código y marcarla como usada. Mismo patrón de import dinámico que saveBonoToFirestore.
+async function saveGiftcardToFirestore(g, price) {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, doc, setDoc, serverTimestamp, Timestamp } =
+      await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Un mes desde la compra, misma lógica que ya se usa para mostrar "Válida hasta" en la tarjeta.
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+    await setDoc(doc(db, 'giftcards', g.code), {
+      recipient: g.recipient,
+      service: g.service,
+      sender: g.sender || '',
+      message: g.msg || '',
+      price,
+      redeemed: false,
+      createdAt: serverTimestamp(),
+      expiresAt: Timestamp.fromDate(expiresAt)
+    });
+  } catch (err) {
+    console.error('No se pudo guardar la gift card en Firestore:', err);
+  }
+}
 
 // Guarda el bono recién pagado en Firestore para que admin.html pueda buscarlo por código.
 // Import dinámico (en vez de <script type="module">) para no pelear con el orden de
