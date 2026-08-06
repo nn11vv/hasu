@@ -301,6 +301,24 @@
 
   .empty-note { color: var(--stone); font-size: 0.82rem; }
   .loading-note { color: var(--stone); font-size: 0.82rem; }
+
+  .stripe-summary { font-size: 0.95rem; color: var(--bark); margin-bottom: 1rem; }
+  .stripe-summary strong { color: var(--moss); }
+  .stripe-list { list-style: none; }
+  .stripe-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--sand);
+    font-size: 0.82rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .stripe-list li:last-child { border-bottom: none; }
+  .stripe-list .sl-amount { font-family: 'DM Sans', sans-serif; color: var(--bark); font-weight: 500; }
+  .stripe-list .sl-desc { color: var(--bark-soft); }
+  .stripe-list .sl-date { color: var(--stone); font-size: 0.75rem; }
 </style>
 </head>
 <body>
@@ -326,6 +344,11 @@
   <div class="panel-header">
     <div class="brand">蓮 HASU · Bonos</div>
     <button class="btn btn-outline" id="logoutBtn">Cerrar sesión</button>
+  </div>
+
+  <div class="card">
+    <h2>Resumen de pagos (Stripe)</h2>
+    <div id="stripeSummaryWrap"><p class="loading-note">Cargando…</p></div>
   </div>
 
   <div class="card">
@@ -441,6 +464,7 @@
       loadCalDay();
       loadPendingReservas();
       loadConfirmedReservas();
+      loadStripeSummary(user);
     } else {
       loginScreen.style.display = 'block';
       panelScreen.classList.remove('visible');
@@ -545,6 +569,43 @@
       listWrap.appendChild(ul);
     } catch (err) {
       listWrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
+    }
+  }
+
+  // ===== RESUMEN DE PAGOS (STRIPE) =====
+  async function loadStripeSummary(user) {
+    const wrap = document.getElementById('stripeSummaryWrap');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('api/admin-summary.php', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+
+      const summaryHtml = data.monthly && data.monthly.count > 0
+        ? `<p class="stripe-summary"><strong>${data.monthly.count}</strong> pagos · <strong>${data.monthly.total.toFixed(2)}€</strong> este mes</p>`
+        : `<p class="stripe-summary">Sin pagos este mes.</p>`;
+
+      let listHtml = '<p class="empty-note">Todavía no hay pagos registrados.</p>';
+      if (Array.isArray(data.recent) && data.recent.length > 0) {
+        const items = data.recent.map((p) => {
+          const date = new Date(p.created * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          return `
+            <li>
+              <span class="sl-date">${date}</span>
+              <span class="sl-desc">${escapeHtml(p.description) || '—'}</span>
+              <span class="sl-amount">${Number(p.amount).toFixed(2)}€</span>
+            </li>
+          `;
+        }).join('');
+        listHtml = `<ul class="stripe-list">${items}</ul>`;
+      }
+
+      wrap.innerHTML = summaryHtml + listHtml;
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar el resumen de pagos.</p>';
     }
   }
 
