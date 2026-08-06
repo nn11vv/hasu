@@ -319,6 +319,24 @@
   .stripe-list .sl-amount { font-family: 'DM Sans', sans-serif; color: var(--bark); font-weight: 500; }
   .stripe-list .sl-desc { color: var(--bark-soft); }
   .stripe-list .sl-date { color: var(--stone); font-size: 0.75rem; }
+
+  .month-summary { font-size: 0.95rem; color: var(--bark); margin-bottom: 1rem; }
+  .month-summary strong { color: var(--moss); }
+  .month-list { list-style: none; }
+  .month-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--sand);
+    font-size: 0.82rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .month-list li:last-child { border-bottom: none; }
+  .month-list .ml-name { font-family: 'DM Sans', sans-serif; color: var(--bark); font-weight: 500; }
+  .month-list .ml-type { color: var(--bark-soft); }
+  .month-list .ml-meta { color: var(--stone); font-size: 0.75rem; }
 </style>
 </head>
 <body>
@@ -349,6 +367,11 @@
   <div class="card">
     <h2>Resumen de pagos (Stripe)</h2>
     <div id="stripeSummaryWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Este mes</h2>
+    <div id="monthSummaryWrap"><p class="loading-note">Cargando…</p></div>
   </div>
 
   <div class="card">
@@ -419,7 +442,7 @@
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, updateDoc, increment,
-    collection, query, where, orderBy, limit, getDocs, serverTimestamp
+    collection, query, where, orderBy, limit, getDocs, serverTimestamp, Timestamp
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
   // ⚠️ REEMPLAZAR con la config real del proyecto Firebase (Consola → Config del proyecto → Tus apps)
@@ -465,6 +488,7 @@
       loadPendingReservas();
       loadConfirmedReservas();
       loadStripeSummary(user);
+      loadMonthSummary();
     } else {
       loginScreen.style.display = 'block';
       panelScreen.classList.remove('visible');
@@ -472,6 +496,8 @@
   });
 
   const TOTAL_SESSIONS = 5;
+  const RESERVA_PRICE = 15;
+  const BONO_PRICE = 230;
 
   function formatDate(timestamp) {
     if (!timestamp) return '—';
@@ -606,6 +632,64 @@
       wrap.innerHTML = summaryHtml + listHtml;
     } catch (err) {
       wrap.innerHTML = '<p class="empty-note">No se pudo cargar el resumen de pagos.</p>';
+    }
+  }
+
+  // ===== ESTE MES (FIRESTORE) =====
+  async function loadMonthSummary() {
+    const wrap = document.getElementById('monthSummaryWrap');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      const monthStartTs = Timestamp.fromDate(monthStart);
+
+      const reservasQ = query(collection(db, 'reservas'), where('createdAt', '>=', monthStartTs));
+      const bonosQ = query(collection(db, 'bonos'), where('createdAt', '>=', monthStartTs));
+      const [reservasSnap, bonosSnap] = await Promise.all([getDocs(reservasQ), getDocs(bonosQ)]);
+
+      const reservasCount = reservasSnap.size;
+      const bonosCount = bonosSnap.size;
+      const total = reservasCount * RESERVA_PRICE + bonosCount * BONO_PRICE;
+
+      const items = [];
+      reservasSnap.forEach((d) => {
+        const r = d.data();
+        items.push({ createdAt: r.createdAt, name: r.name, phone: r.phone, type: `Reserva - ${r.service || ''}` });
+      });
+      bonosSnap.forEach((d) => {
+        const b = d.data();
+        items.push({ createdAt: b.createdAt, name: b.name, phone: b.phone, type: 'Bono 5 sesiones' });
+      });
+      items.sort((a, b) => {
+        const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bt = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bt - at;
+      });
+      const top10 = items.slice(0, 10);
+
+      const summaryHtml = (reservasCount > 0 || bonosCount > 0)
+        ? `<p class="month-summary">${reservasCount} reservas (15€ c/u) + ${bonosCount} bonos (230€ c/u) · <strong>${total}€</strong> este mes</p>`
+        : '';
+
+      let listHtml;
+      if (top10.length === 0) {
+        listHtml = '<p class="empty-note">Todavía no hay actividad este mes.</p>';
+      } else {
+        const liItems = top10.map((it) => `
+          <li>
+            <span class="ml-meta">${formatDate(it.createdAt)}</span>
+            <span class="ml-name">${escapeHtml(it.name) || '—'}</span>
+            <span class="ml-type">${escapeHtml(it.type)}</span>
+            <span class="ml-meta">${escapeHtml(it.phone) || '—'}</span>
+          </li>
+        `).join('');
+        listHtml = `<ul class="month-list">${liItems}</ul>`;
+      }
+
+      wrap.innerHTML = summaryHtml + listHtml;
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar la actividad de este mes.</p>';
     }
   }
 
