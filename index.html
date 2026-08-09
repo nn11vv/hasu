@@ -2746,6 +2746,10 @@
           <input type="text" class="form-input" id="gcSender" placeholder="Tu nombre">
         </div>
         <div class="form-group">
+          <label class="form-label">Tu email (para enviarte la tarjeta también por mail)</label>
+          <input type="email" class="form-input" id="gcEmail" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
           <label class="form-label">Mensaje personal <span style="color:var(--stone)">(opcional)</span></label>
           <textarea class="form-input" id="gcMessage" placeholder="Ej: Espero que disfrutes este momento de descanso..." rows="3" style="resize:none;font-family:inherit;padding-top:0.7rem;"></textarea>
         </div>
@@ -3349,10 +3353,16 @@ function gcGenerate() {
   const recipient = document.getElementById('gcRecipient').value.trim();
   const service   = document.getElementById('gcService').value;
   const sender    = document.getElementById('gcSender').value.trim();
+  const email     = document.getElementById('gcEmail').value.trim();
   const msg       = document.getElementById('gcMessage').value.trim();
 
   if (!recipient || !service) {
     alert('Completá al menos el nombre del destinatario y el tratamiento.');
+    return;
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Ingresá un email válido para poder enviarte la tarjeta también por mail.');
     return;
   }
 
@@ -3385,7 +3395,7 @@ function gcGenerate() {
   document.getElementById('gcStripeBtn').onclick = (e) => {
     e.preventDefault();
     localStorage.setItem('hasu_pending_giftcard', JSON.stringify({
-      code, recipient, service, sender, msg, expiry: expiryStr
+      code, recipient, service, sender, email, msg, expiry: expiryStr
     }));
     window.location.href = stripeLink;
   };
@@ -3406,6 +3416,7 @@ function gcGenerate() {
   document.getElementById('gcRecipient').value = g.recipient;
   document.getElementById('gcService').value   = g.service;
   document.getElementById('gcSender').value    = g.sender || '';
+  document.getElementById('gcEmail').value     = g.email || '';
   document.getElementById('gcMessage').value   = g.msg || '';
 
   // Dibujar tarjeta SIN marca de agua — ya está pagada
@@ -3432,6 +3443,19 @@ function gcGenerate() {
   gcWaBtn.href = gcWaUrl;
   gcWaBtn.target = '_blank';
   gcWaBtn.style.display = 'block';
+
+  // Respaldo por email — canal adicional, no crítico. Si falla, la clienta ya
+  // tiene su descarga y Cecilia ya recibió el aviso por WhatsApp.
+  fetch('api/send-giftcard-email.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: g.email, code: g.code, recipient: g.recipient,
+      service: g.service, sender: g.sender, message: g.msg, expiry: g.expiry
+    })
+  }).then(r => r.json()).then(res => {
+    if (!res.success) console.error('No se pudo enviar el email de respaldo de la gift card:', res.error);
+  }).catch(err => console.error('No se pudo enviar el email de respaldo de la gift card:', err));
 
   localStorage.removeItem('hasu_pending_giftcard');
   window.history.replaceState({}, '', window.location.pathname + '#regalo');
