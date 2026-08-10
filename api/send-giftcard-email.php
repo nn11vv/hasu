@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/ga4-helpers.php';
+
 // Dirección propia del dominio desde la que se envía el mail.
 define('FROM_EMAIL', 'reservas@hasumasajes.com');
 // Copia oculta para Cecilia — cambiar si su casilla de contacto es otra.
@@ -27,6 +29,8 @@ $service   = trim(strip_tags($input['service'] ?? ''));
 $sender    = trim(strip_tags($input['sender'] ?? ''));
 $message   = trim(strip_tags($input['message'] ?? ''));
 $expiry    = trim(strip_tags($input['expiry'] ?? ''));
+$price     = $input['price'] ?? null;
+$clientId  = trim($input['client_id'] ?? '');
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !$code || !$recipient || !$service) {
     http_response_code(400);
@@ -75,6 +79,19 @@ $headers .= "From: Hasu Masajes <" . FROM_EMAIL . ">\r\n";
 $headers .= "Bcc: " . ADMIN_EMAIL . "\r\n";
 
 $sent = mail($email, $subject, $html, $headers);
+
+// Tracking GA4 server-side de la compra — silencioso a propósito: si GA falla o no
+// llegó client_id, la respuesta del email de respaldo no debe verse afectada.
+try {
+    if ($clientId && is_numeric($price)) {
+        ga4_send_event($clientId, 'giftcard_comprada', [
+            'value' => (float)$price,
+            'currency' => 'EUR',
+        ]);
+    }
+} catch (Throwable $ex) {
+    // silencioso
+}
 
 if ($sent) {
     echo json_encode(['success' => true]);

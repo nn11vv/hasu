@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1JVG6Q89WV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1JVG6Q89WV');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hasu · Masajes Terapéuticos</title>
@@ -3236,6 +3244,14 @@ renderCalendar();
 // 4. Copiar el link generado (empieza con https://buy.stripe.com/...) y pegarlo abajo:
 const STRIPE_DEPOSIT_LINK = 'https://buy.stripe.com/6oUcN4cGS7gUgyidk3cwg01';
 
+// Tracking GA4 — se dispara justo antes de que el navegador siga el href nativo
+// hacia Stripe (no hace preventDefault, no bloquea la redirección).
+document.getElementById('btnStripeDeposit').addEventListener('click', () => {
+  const saved = localStorage.getItem('hasu_pending_booking');
+  const service = saved ? JSON.parse(saved).service : undefined;
+  gtag('event', 'click_reservar', { service_name: service });
+});
+
 // BOOKING SUBMIT — paso 1: validar y mostrar pantalla de pago de seña
 document.getElementById('btnBook').addEventListener('click', () => {
   const name = document.getElementById('inputName').value.trim();
@@ -3294,6 +3310,20 @@ document.getElementById('btnCancelDeposit').addEventListener('click', () => {
 
   saveReservaToFirestore(b);
   localStorage.removeItem('hasu_pending_booking');
+
+  // Tracking GA4 de la seña cobrada — client-side (gtag) y server-side (Measurement
+  // Protocol, más fiable frente a ad-blockers) en paralelo. Ninguno bloquea la reserva.
+  gtag('event', 'reserva_completada', { value: 15, currency: 'EUR' });
+  fetch('api/ga4-tracking.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: getOrCreateHasuCid(),
+      event: 'reserva_completada',
+      value: 15,
+      currency: 'EUR'
+    })
+  }).catch(err => console.error('No se pudo enviar el tracking server-side de GA4:', err));
 
   document.getElementById('bookingDeposit').classList.remove('visible');
   document.getElementById('bookingWrap').style.display = 'none';
@@ -3433,7 +3463,12 @@ function gcGenerate() {
 
   // Guardar en Firestore para trazabilidad y poder marcarla como usada desde el panel admin.
   // No bloquea la descarga ni el aviso de WhatsApp si falla (ver catch interno).
-  saveGiftcardToFirestore(g, Number(gcExtractPrice(g.service)));
+  const gcPrice = Number(gcExtractPrice(g.service));
+  saveGiftcardToFirestore(g, gcPrice);
+
+  // Tracking GA4 client-side. El server-side va dentro de send-giftcard-email.php
+  // (recibe price + client_id más abajo), así se evita un segundo endpoint solo para esto.
+  gtag('event', 'giftcard_comprada', { value: gcPrice, currency: 'EUR' });
 
   // Avisar a Cecilia automáticamente por WhatsApp (solo notificación, no requiere acción de ella)
   let waMsg = `🎁✅ Gift Card pagada por Stripe:\n\n💆 Tratamiento: ${g.service}\n👤 Para: ${g.recipient}`;
@@ -3455,7 +3490,8 @@ function gcGenerate() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: g.email, code: g.code, recipient: g.recipient,
-      service: g.service, sender: g.sender, message: g.msg, expiry: g.expiry
+      service: g.service, sender: g.sender, message: g.msg, expiry: g.expiry,
+      price: gcPrice, client_id: getOrCreateHasuCid()
     })
   }).then(r => r.json()).then(res => {
     if (!res.success) console.error('No se pudo enviar el email de respaldo de la gift card:', res.error);
@@ -3503,6 +3539,17 @@ document.getElementById('btnStripeBono').addEventListener('click', (e) => {
   localStorage.setItem('hasu_pending_bono', JSON.stringify({ name, phone, code }));
   window.location.href = STRIPE_BONO_LINK;
 });
+
+// Client ID propio (no depender de leer la cookie _ga de Google) para poder mandarlo
+// al backend y correlacionar eventos client-side / server-side en el mismo GA4.
+function getOrCreateHasuCid() {
+  const match = document.cookie.match(/(?:^|;\s*)hasu_cid=([^;]+)/);
+  if (match) return match[1];
+  const cid = crypto.randomUUID();
+  const oneYear = 60 * 60 * 24 * 365;
+  document.cookie = `hasu_cid=${cid}; max-age=${oneYear}; path=/; SameSite=Lax`;
+  return cid;
+}
 
 // ⚠️ REEMPLAZAR con la config real del proyecto Firebase (Consola → Config del proyecto → Tus apps)
 const firebaseConfig = {
