@@ -3311,9 +3311,9 @@ document.getElementById('btnCancelDeposit').addEventListener('click', () => {
   saveReservaToFirestore(b);
   localStorage.removeItem('hasu_pending_booking');
 
-  // Tracking GA4 de la seña cobrada — client-side (gtag) y server-side (Measurement
-  // Protocol, más fiable frente a ad-blockers) en paralelo. Ninguno bloquea la reserva.
-  gtag('event', 'reserva_completada', { value: 15, currency: 'EUR' });
+  // Tracking GA4 de la seña cobrada — solo server-side (Measurement Protocol) para
+  // no duplicar la conversión: el evento client-side se sacó porque disparaba en
+  // paralelo con este mismo fetch en todo pago exitoso, no solo como fallback.
   fetch('api/ga4-tracking.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3466,9 +3466,9 @@ function gcGenerate() {
   const gcPrice = Number(gcExtractPrice(g.service));
   saveGiftcardToFirestore(g, gcPrice);
 
-  // Tracking GA4 client-side. El server-side va dentro de send-giftcard-email.php
-  // (recibe price + client_id más abajo), así se evita un segundo endpoint solo para esto.
-  gtag('event', 'giftcard_comprada', { value: gcPrice, currency: 'EUR' });
+  // Tracking GA4 solo server-side, dentro de send-giftcard-email.php (recibe price +
+  // client_id más abajo) — se sacó el gtag client-side de acá porque duplicaba la
+  // conversión junto con ese POST en todo pago exitoso, no solo como fallback.
 
   // Avisar a Cecilia automáticamente por WhatsApp (solo notificación, no requiere acción de ella)
   let waMsg = `🎁✅ Gift Card pagada por Stripe:\n\n💆 Tratamiento: ${g.service}\n👤 Para: ${g.recipient}`;
