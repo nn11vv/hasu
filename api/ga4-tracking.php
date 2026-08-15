@@ -31,6 +31,10 @@ if (!$clientId || !in_array($eventName, $allowed_events, true)) {
     exit(json_encode(['success' => false, 'error' => 'Datos inválidos']));
 }
 
+if (file_exists(__DIR__ . '/.debug_ga4')) {
+    error_log('GA4: ga4-tracking.php clientId recibido="' . $clientId . '"');
+}
+
 try {
     ga4_send_event($clientId, $eventName, [
         'value' => is_numeric($value) ? (float)$value : 0,
