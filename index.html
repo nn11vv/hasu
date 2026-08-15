@@ -36,7 +36,13 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap" rel="stylesheet">
+<!-- Fuentes cargadas sin bloquear el render: media="print" hace que el navegador
+     baje la hoja con prioridad baja y no espere a aplicarla para pintar; el onload
+     la promueve a "all". El <noscript> cubre el caso sin JS. Antes este <link> era
+     el único recurso que bloqueaba el render (~2,6s en móvil). -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400&family=Noto+Serif+JP:wght@200;300&display=swap"></noscript>
 
 <style>
   :root {
@@ -116,6 +122,20 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(217, 174, 203, 0.3);
+  }
+  /* Con el menú abierto, el nav NO debe llevar backdrop-filter: lo convertiría en
+     containing block de .nav-links.open (fixed, inset:0) y el menú colapsaría dentro
+     de la barra en vez de cubrir el viewport. Es inocuo visualmente: el propio menú
+     ya cubre la pantalla entera con su fondo y su blur. */
+  nav.nav-open, nav.nav-open.scrolled {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    /* backdrop-filter FUERA de la transición: si se interpola, los valores
+       intermedios (blur(8px), blur(3px)…) siguen siendo distintos de "none" y el
+       nav sigue actuando de containing block durante esos 0.4s — el menú aparece
+       colapsado dentro de la barra y recién se acomoda al terminar el fade.
+       Al cerrar vuelve la regla base y el blur sí reaparece con transición. */
+    transition: background 0.4s;
   }
 
   .nav-logo {
@@ -1688,10 +1708,10 @@
     <span></span><span></span><span></span>
   </button>
 </nav>
-<div class="nav-close-overlay" id="navOverlay" onclick="closeNav()"></div>
+<div class="nav-close-overlay" id="navOverlay" role="button" tabindex="0" aria-label="Cerrar menú" onclick="closeNav()"></div>
 
 <!-- LOTO SVG REUTILIZABLE (template oculto) -->
-<svg style="display:none" id="lotusDef">
+<svg aria-hidden="true" style="display:none" id="lotusDef">
   <symbol id="lotus-symbol" viewBox="0 0 120 120">
     <!-- Sombra base / reflejo en agua -->
     <ellipse cx="60" cy="105" rx="22" ry="4" fill="currentColor" opacity="0.12"/>
@@ -1759,7 +1779,7 @@
     <div class="hero-actions">
       <a href="#reservar" class="btn-primary">
         <span>Reservar cita</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </a>
@@ -1773,7 +1793,7 @@
       <div id="heroVisual" style="position:absolute;inset:0;overflow:hidden;">
 
         <!-- Fondo estático SVG -->
-        <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 700 900"
+        <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 700 900"
           preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <radialGradient id="hBg" cx="45%" cy="50%" r="90%">
@@ -1797,7 +1817,7 @@
         </svg>
 
         <!-- LOTO ANIMADO -->
-        <svg id="lotusMain" viewBox="0 0 360 380" xmlns="http://www.w3.org/2000/svg"
+        <svg aria-hidden="true" id="lotusMain" viewBox="0 0 360 380" xmlns="http://www.w3.org/2000/svg"
           style="position:absolute; left:50%; top:48%; transform:translate(-50%,-50%);
                  width:min(82%,400px); height:auto; overflow:visible;">
           <defs>
@@ -2109,7 +2129,7 @@
 <!-- LOTO SEPARADOR -->
 <div style="background:var(--cream); display:flex; justify-content:center; padding:2rem 0 0; overflow:hidden;">
   <div class="lotus-float-wrap" style="opacity:0; animation: fadeIn 1s ease 0.3s forwards;">
-    <svg class="lotus-svg" width="90" height="78" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--moss);">
+    <svg aria-hidden="true" class="lotus-svg" width="90" height="78" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--moss);">
       <use href="#lotus-symbol"/>
     </svg>
   </div>
@@ -2118,7 +2138,7 @@
 <!-- ABOUT -->
 <section class="about" id="sobre-mi">
   <div class="about-visual">
-    <svg viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+    <svg aria-hidden="true" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
       <defs>
         <radialGradient id="aboutGrad" cx="50%" cy="40%" r="70%">
           <stop offset="0%" stop-color="#9B6B9B"/>
@@ -2194,7 +2214,7 @@
     <!-- 01 Descontracturante -->
     <div class="service-card reveal">
       <div class="service-num">01</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 28c0-7 4-14 10-14s10 7 10 14" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <path d="M10 32c-2-1-3-3-2-5s3-3 5-2" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.7"/>
         <path d="M38 32c2-1 3-3 2-5s-3-3-5-2" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.7"/>
@@ -2218,7 +2238,7 @@
     <!-- 02 Craneofacial -->
     <div class="service-card reveal">
       <div class="service-num">02</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="24" cy="21" rx="12" ry="13" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M18 34v4M30 34v4" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round"/>
         <path d="M19 22c0-1.5 1.3-2.5 2.5-2.5" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -2237,7 +2257,7 @@
     <!-- 03 Facial Relajante -->
     <div class="service-card reveal">
       <div class="service-num">03</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M18 16c0 0 2-3 6-3s6 3 6 3" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
         <path d="M16 26c2 4 5 6 8 6s6-2 8-6" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -2255,7 +2275,7 @@
     <!-- 04 Facial Intrabucal -->
     <div class="service-card reveal">
       <div class="service-num">04</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="24" cy="22" rx="12" ry="14" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M18 27c1 3 3 5 6 5s5-2 6-5" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.8"/>
         <path d="M18 27h12" stroke="#9B6B9B" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
@@ -2274,7 +2294,7 @@
     <!-- 05 Masaje de Manos -->
     <div class="service-card reveal">
       <div class="service-num">05</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 38c-6 0-12-6-12-14v-8c0-1 1-2 2-2s2 1 2 2v6" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <path d="M16 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
         <path d="M20 22v-8c0-1 1-2 2-2s2 1 2 2v8" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
@@ -2293,7 +2313,7 @@
     <!-- 06 Masaje de Pies -->
     <div class="service-card reveal">
       <div class="service-num">06</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 32c0-8 4-16 10-16 4 0 6 4 6 8v4c0 4-3 8-8 8h-2c-3 0-6-2-6-4z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <circle cx="29" cy="18" r="1.5" fill="#9B6B9B" opacity="0.5"/>
         <circle cx="32" cy="21" r="1.5" fill="#9B6B9B" opacity="0.5"/>
@@ -2311,7 +2331,7 @@
     <!-- 07 Linfáticos -->
     <div class="service-card reveal">
       <div class="service-num">07</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="24" cy="24" rx="14" ry="10" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M14 20c-3-1-5-2-4-5s4-3 6-1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
         <path d="M34 20c3-1 5-2 4-5s-4-3-6-1" stroke="#9B6B9B" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
@@ -2337,7 +2357,7 @@
     <!-- 08 Reductores -->
     <div class="service-card reveal">
       <div class="service-num">08</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 28c0-8 6-16 14-16s14 8 14 16" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <ellipse cx="16" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
         <ellipse cx="32" cy="30" rx="4" ry="5" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.7"/>
@@ -2355,7 +2375,7 @@
     <!-- 09 Ventosas -->
     <div class="service-card reveal">
       <div class="service-num">09</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="16" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <circle cx="32" cy="24" r="7" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <circle cx="16" cy="24" r="3" fill="#9B6B9B" opacity="0.2"/>
@@ -2374,7 +2394,7 @@
     <!-- 10 Relajantes Completo -->
     <div class="service-card reveal">
       <div class="service-num">10</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 8C16 8 10 16 10 24s6 16 14 16 14-8 14-16S32 8 24 8z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <path d="M18 24c0-3 2.5-7 6-7s6 4 6 7-2.5 7-6 7-6-4-6-7z" stroke="#9B6B9B" stroke-width="1" fill="none" opacity="0.6"/>
       </svg>
@@ -2390,7 +2410,7 @@
     <!-- 11 Deportivos -->
     <div class="service-card reveal">
       <div class="service-num">11</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M16 36c2-4 5-8 8-10" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <path d="M24 26c2-5 6-10 8-14" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <circle cx="32" cy="12" r="3" stroke="#9B6B9B" stroke-width="1.1" fill="none"/>
@@ -2409,7 +2429,7 @@
     <!-- 12 Spa de Manos -->
     <div class="service-card reveal">
       <div class="service-num">12</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 38c-6 0-12-6-12-14v-8c0-1 1-2 2-2s2 1 2 2v6" stroke="#9B6B9B" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <path d="M16 22v-7c0-1 1-2 2-2s2 1 2 2v7" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
         <path d="M20 22v-8c0-1 1-2 2-2s2 1 2 2v8" stroke="#9B6B9B" stroke-width="1.1" stroke-linecap="round" fill="none"/>
@@ -2429,7 +2449,7 @@
     <!-- 13 Spa de Pies -->
     <div class="service-card reveal">
       <div class="service-num">13</div>
-      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-hidden="true" class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 32c0-8 4-16 10-16 4 0 6 4 6 8v4c0 4-3 8-8 8h-2c-3 0-6-2-6-4z" stroke="#9B6B9B" stroke-width="1.2" fill="none"/>
         <circle cx="29" cy="18" r="1.5" fill="#9B6B9B" opacity="0.5"/>
         <circle cx="32" cy="21" r="1.5" fill="#9B6B9B" opacity="0.4"/>
@@ -2495,7 +2515,7 @@
 <section class="testimonials" id="testimonios">
   <!-- Loto decorativo testimonios -->
   <div style="position:absolute; top:2rem; right:3rem; opacity:0.12; pointer-events:none; animation: lotusFloat 7s ease-in-out 3s infinite;">
-    <svg class="lotus-svg" width="180" height="155" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#E8A0C0;">
+    <svg aria-hidden="true" class="lotus-svg" width="180" height="155" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#E8A0C0;">
       <use href="#lotus-symbol"/>
     </svg>
   </div>
@@ -2566,7 +2586,7 @@
 
   <div style="text-align:center; margin-top:3rem;" class="reveal">
     <a href="https://www.google.com/maps/place/Hasu+Masajes/@38.4354873,-0.4322649,17z/data=!3m1!4b1!4m6!3m5!1s0xd623b93e722d3af:0xed3d7e95df12f8ee!8m2!3d38.4354831!4d-0.42969!16s%2Fg%2F11wpp_4pss" target="_blank" style="display:inline-flex; align-items:center; gap:0.6rem; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(253,240,248,0.45); text-decoration:none; border-bottom:1px solid rgba(253,240,248,0.15); padding-bottom:2px; transition:color 0.3s, border-color 0.3s;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
       Ver reseñas en Google
     </a>
   </div>
@@ -2622,15 +2642,15 @@
         <h3>Tus datos</h3>
 
         <div class="form-group">
-          <label class="form-label">Nombre completo</label>
+          <label class="form-label" for="inputName">Nombre completo</label>
           <input type="text" class="form-input" id="inputName" placeholder="Tu nombre">
         </div>
         <div class="form-group">
-          <label class="form-label">Teléfono / WhatsApp</label>
+          <label class="form-label" for="inputPhone">Teléfono / WhatsApp</label>
           <input type="tel" class="form-input" id="inputPhone" placeholder="+34 600 000 000">
         </div>
         <div class="form-group">
-          <label class="form-label">Tratamiento</label>
+          <label class="form-label" for="inputService">Tratamiento</label>
           <div class="select-wrap">
             <select class="form-select" id="inputService">
               <option value="">Seleccionar…</option>
@@ -2654,7 +2674,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Nota (opcional)</label>
+          <label class="form-label" for="inputNote">Nota (opcional)</label>
           <input type="text" class="form-input" id="inputNote" placeholder="Zonas a trabajar, consultas...">
         </div>
 
@@ -2665,7 +2685,7 @@
         </div>
 
         <div class="deposit-notice">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Para confirmar tu cita se requiere una <strong>seña de 15€</strong> (se descuenta del precio final). La seña no es reembolsable ante cancelaciones.</span>
         </div>
         <button class="btn-book" id="btnBook">Pagar seña y reservar</button>
@@ -2676,7 +2696,7 @@
     <!-- PAGO DE SEÑA -->
     <div class="booking-deposit" id="bookingDeposit">
       <div class="deposit-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" stroke-width="1.4"/></svg>
+        <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" stroke-width="1.4"/></svg>
       </div>
       <h3>Confirma tu seña</h3>
       <p class="deposit-summary" id="depositSummary"></p>
@@ -2687,7 +2707,7 @@
         <span>El horario es <strong>orientativo</strong>. Cecilia confirmará tu cita por WhatsApp en menos de 2 horas. Si no está disponible, te propondrá una alternativa.</span>
       </div>
       <a href="#" id="btnStripeDeposit" class="btn-book" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
         Pagar con tarjeta (Stripe)
       </a>
       <button class="btn-ghost-deposit" id="btnCancelDeposit">Volver y editar reserva</button>
@@ -2700,7 +2720,7 @@
       <h3>¡Seña recibida!</h3>
       <p id="bookingSuccessText">Tu seña quedó pagada, pero <strong>tu cita todavía no está confirmada</strong>. Se ha abierto WhatsApp con los datos de tu reserva: envía el mensaje y Cecilia se pondrá en contacto para confirmar el horario o proponerte una alternativa.</p>
       <a href="#" id="btnOpenWaBooking" class="btn-book" style="display:none;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;margin-top:1.2rem;max-width:280px;margin-left:auto;margin-right:auto;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         Enviar confirmación por WhatsApp
       </a>
       <p style="font-size:0.85rem; color:var(--bark-soft); margin-top:1.5rem;">Mientras tanto, puedes seguirme en Instagram <a href="https://www.instagram.com/hasu.masajes/" target="_blank" style="color:var(--moss); text-decoration:none;">@hasu.masajes</a></p>
@@ -2723,11 +2743,11 @@
       <div class="giftcard-form">
         <h3>Personalizar tarjeta</h3>
         <div class="form-group">
-          <label class="form-label">Para quién es el regalo</label>
+          <label class="form-label" for="gcRecipient">Para quién es el regalo</label>
           <input type="text" class="form-input" id="gcRecipient" placeholder="Nombre del destinatario">
         </div>
         <div class="form-group">
-          <label class="form-label">Tratamiento a regalar</label>
+          <label class="form-label" for="gcService">Tratamiento a regalar</label>
           <div class="select-wrap">
             <select class="form-select" id="gcService">
               <option value="">Seleccionar…</option>
@@ -2750,15 +2770,15 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">De parte de</label>
+          <label class="form-label" for="gcSender">De parte de</label>
           <input type="text" class="form-input" id="gcSender" placeholder="Tu nombre">
         </div>
         <div class="form-group">
-          <label class="form-label">Tu email (para enviarte la tarjeta también por mail)</label>
+          <label class="form-label" for="gcEmail">Tu email (para enviarte la tarjeta también por mail)</label>
           <input type="email" class="form-input" id="gcEmail" placeholder="tu@email.com">
         </div>
         <div class="form-group">
-          <label class="form-label">Mensaje personal <span style="color:var(--stone)">(opcional)</span></label>
+          <label class="form-label" for="gcMessage">Mensaje personal <span style="color:var(--stone)">(opcional)</span></label>
           <textarea class="form-input" id="gcMessage" placeholder="Ej: Espero que disfrutes este momento de descanso..." rows="3" style="resize:none;font-family:inherit;padding-top:0.7rem;"></textarea>
         </div>
         <button class="btn-book" id="gcPreviewBtn" style="margin-top:0.5rem;">Ver tarjeta</button>
@@ -2769,7 +2789,7 @@
         <canvas id="gcCanvas" width="600" height="360"></canvas>
         <div class="gc-actions" id="gcActions">
           <a href="#" id="gcStripeBtn" class="btn-book" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
+            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
             <span id="gcStripeBtnText">Pagar con tarjeta (Stripe)</span>
           </a>
           <button class="gc-download-btn" id="gcDownloadBtn" disabled>Descargar tarjeta (requiere pago)</button>
@@ -2814,16 +2834,16 @@
       <div class="bono-action">
         <h4>Comprar este bono</h4>
         <div class="form-group">
-          <label class="form-label">Nombre completo</label>
+          <label class="form-label" for="bonoName">Nombre completo</label>
           <input type="text" class="form-input" id="bonoName" placeholder="Tu nombre">
         </div>
         <div class="form-group">
-          <label class="form-label">Teléfono / WhatsApp</label>
+          <label class="form-label" for="bonoPhone">Teléfono / WhatsApp</label>
           <input type="text" class="form-input" id="bonoPhone" placeholder="+34 6XX XXX XXX">
         </div>
         <div class="bono-summary" id="bonoSummary"></div>
         <a href="#" id="btnStripeBono" class="btn-book" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2L4 14h6l-1.5 8L19 10h-6l1.5-8z"/></svg>
           Pagar 230€ y activar bono
         </a>
         <p class="bono-note">Tras el pago recibirás un código de bono por WhatsApp para ir registrando tus sesiones con Cecilia.</p>
@@ -2836,7 +2856,7 @@
       <h3>¡Bono activado!</h3>
       <p id="bonoSuccessText"></p>
       <a href="#" id="btnOpenWaBono" class="btn-book" style="display:none;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;margin-top:1.2rem;max-width:280px;margin-left:auto;margin-right:auto;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.554 4.122 1.526 5.855L.057 23.5l5.784-1.517A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.846 0-3.575-.496-5.068-1.361l-.363-.216-3.766.988 1.006-3.668-.237-.377A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         Avisar a Cecilia por WhatsApp
       </a>
     </div>
@@ -2915,15 +2935,15 @@
   </div>
   <div class="contact-strip-links">
     <a href="tel:+34615642937" class="contact-link" target="_blank">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
       615 64 29 37
     </a>
     <a href="https://wa.me/34615642937" class="contact-link" target="_blank">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       WhatsApp
     </a>
     <a href="https://www.instagram.com/hasu.masajes/" class="contact-link" target="_blank">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
       Instagram
     </a>
   </div>
@@ -2939,10 +2959,10 @@
     <p class="footer-tagline">Quiromasajista en Mutxamel, Alicante. Bienestar y relajación con atención cercana y totalmente personalizada.</p>
     <div class="footer-social">
       <a href="https://www.instagram.com/hasu.masajes/" class="social-link" target="_blank" aria-label="Instagram">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
       </a>
       <a href="https://wa.me/34615642937" class="social-link" target="_blank" aria-label="WhatsApp">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       </a>
     </div>
   </div>
@@ -2971,7 +2991,7 @@
 <div class="footer-bottom">
   <span>© 2026 Hasu Masajes · Todos los derechos reservados</span>
   <span style="display:inline-flex;align-items:center;gap:6px;">
-    <svg width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
       <ellipse cx="20" cy="19" rx="4.5" ry="11" fill="#BF8FBF"/>
       <ellipse cx="12" cy="22" rx="4" ry="9" fill="#BF8FBF" opacity="0.7" transform="rotate(-30 12 22)"/>
       <ellipse cx="28" cy="22" rx="4" ry="9" fill="#BF8FBF" opacity="0.7" transform="rotate(30 28 22)"/>
@@ -2988,31 +3008,49 @@ function toggleNav() {
   const links = document.getElementById('navLinks');
   const btn = document.getElementById('navHamburger');
   const overlay = document.getElementById('navOverlay');
+  const nav = document.getElementById('mainNav');
   const isOpen = links.classList.toggle('open');
   btn.classList.toggle('open');
   overlay.classList.toggle('open');
+  nav.classList.toggle('nav-open', isOpen);
   if (isOpen) {
+    // position:fixed en el body en vez de overflow:hidden — iOS Safari ignora
+    // overflow:hidden y sigue scrolleando la página por detrás del menú.
     _navScrollY = window.scrollY;
-    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_navScrollY}px`;
+    document.body.style.width = '100%';
   } else {
-    document.body.style.overflow = '';
-    window.scrollTo(0, _navScrollY);
+    unlockBodyScroll(true);
   }
 }
 function closeNav(restoreScroll = true) {
-  const links = document.getElementById('navLinks');
-  const btn = document.getElementById('navHamburger');
-  const overlay = document.getElementById('navOverlay');
-  links.classList.remove('open');
-  btn.classList.remove('open');
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
-  // Al cerrar sin elegir un link (overlay/X) restauramos la posición previa.
-  // Al cerrar por click en un link de navegación, NO: dejamos que el navegador
-  // haga su scroll nativo al href="#seccion" — si forzamos scrollTo acá lo pisa
-  // y el menú se cierra sin llevarte a ningún lado.
+  document.getElementById('navLinks').classList.remove('open');
+  document.getElementById('navHamburger').classList.remove('open');
+  document.getElementById('navOverlay').classList.remove('open');
+  document.getElementById('mainNav').classList.remove('nav-open');
+  unlockBodyScroll(restoreScroll);
+}
+// Al cerrar sin elegir un link (overlay/X) restauramos la posición previa.
+// Al cerrar por click en un link de navegación, NO: dejamos que el navegador
+// haga su scroll nativo al href="#seccion" — si forzamos scrollTo acá lo pisa
+// y el menú se cierra sin llevarte a ningún lado.
+function unlockBodyScroll(restoreScroll) {
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
   if (restoreScroll) window.scrollTo(0, _navScrollY);
 }
+// El overlay es un <div> con role="button": tabindex lo hace alcanzable por teclado,
+// pero a diferencia de un <button> real no responde solo a Enter/Espacio. Este handler
+// le da ese comportamiento. Sigue mostrándose solo con el menú abierto (display:none
+// el resto del tiempo), así que no aparece en el orden de tabulación de la página.
+document.getElementById('navOverlay').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    closeNav();
+  }
+});
 
 // CURSOR
 const cursor = document.getElementById('cursor');
