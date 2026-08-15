@@ -1,109 +1,61 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Bonos de 5 sesiones. Doc ID = código del bono (ej: HASU-BONO-XXXX).
-    match /bonos/{bonoId} {
-
-      // Cualquiera puede leer (el panel admin no requiere login para consultar).
+    match /bonos/{code} {
+      allow create: if request.resource.data.keys().hasAll(
+            ['name','phone','service','totalSessions','usedSessions','createdAt','expiresAt']
+          )
+          && request.resource.data.usedSessions == 0
+          && request.resource.data.totalSessions is int
+          && !exists(/databases/$(database)/documents/bonos/$(code));
       allow read: if true;
-
-      // La web pública crea el bono justo después del pago con Stripe.
-      // Solo si el doc todavía no existe y arranca en usedSessions == 0.
-      allow create: if !exists(/databases/$(database)/documents/bonos/$(bonoId))
-                    && request.resource.data.usedSessions == 0;
-
-      // Solo Cecilia (autenticada) puede actualizar, y solo para sumar
-      // una sesión usada por vez. El resto de los campos no puede cambiar.
       allow update: if request.auth != null
-                    && request.resource.data.usedSessions == resource.data.usedSessions + 1
-                    && request.resource.data.name == resource.data.name
-                    && request.resource.data.phone == resource.data.phone
-                    && request.resource.data.totalSessions == resource.data.totalSessions
-                    && request.resource.data.expiresAt == resource.data.expiresAt
-                    && request.resource.data.createdAt == resource.data.createdAt;
-
-      // Nunca se borran bonos.
+          && request.resource.data.usedSessions is int
+          && request.resource.data.usedSessions >= resource.data.usedSessions
+          && request.resource.data.usedSessions <= resource.data.totalSessions;
       allow delete: if false;
     }
 
-    // Bloqueos manuales de Cecilia por día. Doc ID = fecha "YYYY-MM-DD".
     match /horarios/{fecha} {
-
-      // La landing pública necesita leer disponibilidad sin login.
       allow read: if true;
-
-      // Solo Cecilia autenticada bloquea/desbloquea horarios o días.
       allow write: if request.auth != null;
     }
 
-    // Reservas con seña pagada. Doc ID autogenerado.
     match /reservas/{reservaId} {
-
-      // Necesario para calcular slots ocupados sin login.
       allow read: if true;
-
-      // La web pública crea la reserva justo después del pago de la seña
-      // (mismo patrón de confianza que ya usa /bonos). Se valida forma
-      // mínima para evitar que se creen documentos basura que bloqueen
-      // horarios sin datos reales de una clienta.
-      allow create: if request.resource.data.depositPaid == true
-                    && request.resource.data.status == 'pendiente_confirmacion'
-                    && request.resource.data.date is string
-                    && request.resource.data.time is string
-                    && request.resource.data.name is string
-                    && request.resource.data.name.size() > 0
-                    && request.resource.data.phone is string
-                    && request.resource.data.phone.size() > 0
-                    && request.resource.data.service is string;
-
-      // Solo Cecilia (autenticada) puede tocar el estado. El resto de
-      // los campos identificatorios no puede cambiar.
+      allow create: if request.resource.data.keys().hasAll(
+            ['date','time','name','phone','service','depositPaid','status']
+          )
+          && request.resource.data.depositPaid == true
+          && request.resource.data.status == 'pendiente_confirmacion'
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.phone is string
+          && request.resource.data.phone.size() > 0;
       allow update: if request.auth != null
-                    && request.resource.data.date == resource.data.date
-                    && request.resource.data.time == resource.data.time
-                    && request.resource.data.name == resource.data.name
-                    && request.resource.data.phone == resource.data.phone
-                    && (request.resource.data.status == 'confirmada'
-                        || request.resource.data.status == 'cancelada'
-                        || request.resource.data.status == 'pendiente_confirmacion');
-
+          && request.resource.data.date == resource.data.date
+          && request.resource.data.time == resource.data.time
+          && request.resource.data.name == resource.data.name
+          && request.resource.data.phone == resource.data.phone
+          && (request.resource.data.status == 'confirmada'
+              || request.resource.data.status == 'cancelada'
+              || request.resource.data.status == 'pendiente_confirmacion');
       allow delete: if false;
     }
 
-    // Gift Cards. Doc ID = código de la gift card (ej: HASU-XXXX).
-    match /giftcards/{giftcardId} {
-
-      // Cualquiera puede leer (el panel admin no requiere login para consultar).
+    match /giftcards/{code} {
       allow read: if true;
-
-      // La web pública crea la gift card justo después del pago con Stripe
-      // (mismo patrón de confianza que ya usa /bonos y /reservas).
-      allow create: if !exists(/databases/$(database)/documents/giftcards/$(giftcardId))
-                    && request.resource.data.recipient is string
-                    && request.resource.data.recipient.size() > 0
-                    && request.resource.data.service is string
-                    && request.resource.data.service.size() > 0
-                    && request.resource.data.price is number
-                    && request.resource.data.redeemed == false
-                    && request.resource.data.createdAt != null
-                    && request.resource.data.expiresAt != null;
-
-      // Solo Cecilia (autenticada) puede actualizar, y solo para marcar la
-      // gift card como usada (false -> true). El resto de los campos no
-      // puede cambiar.
+      allow create: if request.resource.data.keys().hasAll(
+            ['recipient','service','price','redeemed','createdAt','expiresAt']
+          )
+          && request.resource.data.redeemed == false
+          && request.resource.data.price is number
+          && !exists(/databases/$(database)/documents/giftcards/$(code));
       allow update: if request.auth != null
-                    && resource.data.redeemed == false
-                    && request.resource.data.redeemed == true
-                    && request.resource.data.recipient == resource.data.recipient
-                    && request.resource.data.service == resource.data.service
-                    && request.resource.data.sender == resource.data.sender
-                    && request.resource.data.message == resource.data.message
-                    && request.resource.data.price == resource.data.price
-                    && request.resource.data.createdAt == resource.data.createdAt
-                    && request.resource.data.expiresAt == resource.data.expiresAt;
-
+          && request.resource.data.redeemed == true
+          && resource.data.redeemed == false
+          && request.resource.data.recipient == resource.data.recipient
+          && request.resource.data.price == resource.data.price;
       allow delete: if false;
     }
   }

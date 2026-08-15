@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Allowlist de eventos — evita que este endpoint se use para inyectar cualquier
 // nombre/param arbitrario a la propiedad de GA4.
-$allowed_events = ['reserva_completada'];
+$allowed_events = ['reserva_completada', 'bono_comprado'];
 
 $input     = json_decode(file_get_contents('php://input'), true) ?? [];
 $clientId  = trim($input['client_id'] ?? '');

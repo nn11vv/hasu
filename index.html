@@ -2790,7 +2790,7 @@
       <p>Comprométete con tu bienestar y ahorra. Pagas una vez, disfrutas varias sesiones.</p>
     </div>
 
-    <div class="bono-card reveal">
+    <div class="bono-card reveal" id="bonoCard">
       <div class="bono-info">
         <span class="bono-badge">5 sesiones</span>
         <h3>Bono Relajante Completo</h3>
@@ -3511,12 +3511,17 @@ function gcGenerate() {
 // 4. Copiar el link generado y pegarlo abajo:
 const STRIPE_BONO_LINK = 'https://buy.stripe.com/8x2eVc9uG44Idm6dk3cwg00';
 
+// Nombre del producto. Fuente única para el resumen, el aviso de WhatsApp y el campo
+// "service" que las reglas de Firestore exigen al crear el bono. El <h3> de la sección
+// lo repite en el HTML a propósito: es contenido estático, no debe depender de JS.
+const BONO_SERVICE = 'Bono Relajante Completo';
+
 function bonoUpdateSummary() {
   const name  = document.getElementById('bonoName').value.trim();
   const phone = document.getElementById('bonoPhone').value.trim();
   const summary = document.getElementById('bonoSummary');
   if (name && phone) {
-    summary.innerHTML = `<strong>Bono Relajante Completo</strong> · 5 sesiones · 230€<br>${name} · ${phone}`;
+    summary.innerHTML = `<strong>${BONO_SERVICE}</strong> · 5 sesiones · 230€<br>${name} · ${phone}`;
     summary.classList.add('visible');
   } else {
     summary.classList.remove('visible');
@@ -3609,6 +3614,7 @@ async function saveBonoToFirestore(code, name, phone) {
     await setDoc(doc(db, 'bonos', code), {
       name,
       phone,
+      service: BONO_SERVICE,
       totalSessions: 5,
       usedSessions: 0,
       createdAt: serverTimestamp(),
@@ -3664,12 +3670,27 @@ async function saveReservaToFirestore(b) {
     `Hola ${bo.name}, tu bono de 5 sesiones está activo.<br><br>
      Código de bono: <strong>${bo.code}</strong><br>
      Guárdalo — Cecilia lo usará para registrar cada sesión que utilices.`;
+  document.getElementById('bonoCard').style.display = 'none';
   document.getElementById('bonoSuccess').classList.add('visible');
+  document.getElementById('bonoSuccess').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   saveBonoToFirestore(bo.code, bo.name, bo.phone);
 
+  // Tracking GA4 del bono cobrado — solo server-side (Measurement Protocol), mismo
+  // patrón que la seña: nunca client-side, para no arriesgar duplicar la conversión.
+  fetch('api/ga4-tracking.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: getOrCreateHasuCid(),
+      event: 'bono_comprado',
+      value: 230,
+      currency: 'EUR'
+    })
+  }).catch(err => console.error('No se pudo enviar el tracking server-side de GA4:', err));
+
   // Avisar a Cecilia automáticamente por WhatsApp
-  const waMsg = `💳✅ Bono de 5 sesiones pagado por Stripe:\n\n👤 Cliente: ${bo.name}\n📱 Teléfono: ${bo.phone}\n🔑 Código: ${bo.code}\n💆 Bono Relajante Completo · 230€\n\n¡Gracias!`;
+  const waMsg = `💳✅ Bono de 5 sesiones pagado por Stripe:\n\n👤 Cliente: ${bo.name}\n📱 Teléfono: ${bo.phone}\n🔑 Código: ${bo.code}\n💆 ${BONO_SERVICE} · 230€\n\n¡Gracias!`;
   const bonoWaUrl = `https://wa.me/34615642937?text=${encodeURIComponent(waMsg)}`;
 
   // Intento automático — puede ser bloqueado por el navegador al no venir de un click directo.
