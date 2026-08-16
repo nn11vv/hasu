@@ -2611,6 +2611,38 @@
           <span>📅</span>
           <span>Los horarios mostrados son orientativos. Tu cita quedará confirmada una vez que Cecilia lo verifique por WhatsApp.</span>
         </div>
+        <!-- El tratamiento va ANTES del calendario: su duración es la que determina qué
+             horarios se pueden ofrecer. En móvil (una sola columna) queda arriba de forma
+             natural, sin que la clienta tenga que descubrirlo tocando un día. -->
+        <div class="form-group">
+          <label class="form-label" for="inputService">Tratamiento</label>
+          <div class="select-wrap">
+            <select class="form-select" id="inputService">
+              <option value="">Seleccionar…</option>
+              <!-- data-duration = minutos reales de la sesión. Es el dato que manda para
+                   calcular los horarios libres; el texto del value queda intacto porque es
+                   lo que se guarda en Firestore y se envía por WhatsApp. Para cambiar una
+                   duración, editar SOLO este atributo. -->
+              <option data-duration="60" value="🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€">🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€</option>
+              <option data-duration="30" value="Descontracturante · 30 min · 35€">Descontracturante · 30 min · 35€</option>
+              <option data-duration="60" value="Descontracturante · 1 hora · 50€">Descontracturante · 1 hora · 50€</option>
+              <option data-duration="30" value="Craneofacial · 30 min · 30€">Craneofacial · 30 min · 30€</option>
+              <option data-duration="30" value="Facial Relajante · 30 min · 30€">Facial Relajante · 30 min · 30€</option>
+              <option data-duration="30" value="Facial Intrabucal · 30 min · 40€">Facial Intrabucal · 30 min · 40€</option>
+              <option data-duration="30" value="Masaje de Manos · 30 min · 30€">Masaje de Manos · 30 min · 30€</option>
+              <option data-duration="30" value="Masaje de Pies · 30 min · 30€">Masaje de Pies · 30 min · 30€</option>
+              <option data-duration="90" value="Linfáticos Cuerpo Completo · 1h30 · 75€">Linfáticos Cuerpo Completo · 1h30 · 75€</option>
+              <option data-duration="40" value="Linfáticos Solo Piernas · 40 min · 55€">Linfáticos Solo Piernas · 40 min · 55€</option>
+              <option data-duration="45" value="Reductores · 45 min · 80€">Reductores · 45 min · 80€</option>
+              <option data-duration="45" value="Ventosas · 45 min · 40€">Ventosas · 45 min · 40€</option>
+              <option data-duration="60" value="Relajantes Completo · 1 hora · 50€">Relajantes Completo · 1 hora · 50€</option>
+              <option data-duration="40" value="Deportivos · 40 min · 50€">Deportivos · 40 min · 50€</option>
+              <option data-duration="40" value="Spa de Manos · 40 min · 50€">Spa de Manos · 40 min · 50€</option>
+              <option data-duration="40" value="Spa de Pies · 40 min · 50€">Spa de Pies · 40 min · 50€</option>
+            </select>
+          </div>
+        </div>
+
         <h3>Elige una fecha</h3>
         <div class="calendar" id="calendar">
           <div class="cal-header">
@@ -2648,30 +2680,6 @@
         <div class="form-group">
           <label class="form-label" for="inputPhone">Teléfono / WhatsApp</label>
           <input type="tel" class="form-input" id="inputPhone" placeholder="+34 600 000 000">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="inputService">Tratamiento</label>
-          <div class="select-wrap">
-            <select class="form-select" id="inputService">
-              <option value="">Seleccionar…</option>
-              <option value="🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€">🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€</option>
-              <option value="Descontracturante · 30 min · 35€">Descontracturante · 30 min · 35€</option>
-              <option value="Descontracturante · 1 hora · 50€">Descontracturante · 1 hora · 50€</option>
-              <option value="Craneofacial · 30 min · 30€">Craneofacial · 30 min · 30€</option>
-              <option value="Facial Relajante · 30 min · 30€">Facial Relajante · 30 min · 30€</option>
-              <option value="Facial Intrabucal · 30 min · 40€">Facial Intrabucal · 30 min · 40€</option>
-              <option value="Masaje de Manos · 30 min · 30€">Masaje de Manos · 30 min · 30€</option>
-              <option value="Masaje de Pies · 30 min · 30€">Masaje de Pies · 30 min · 30€</option>
-              <option value="Linfáticos Cuerpo Completo · 1h30 · 75€">Linfáticos Cuerpo Completo · 1h30 · 75€</option>
-              <option value="Linfáticos Solo Piernas · 40 min · 55€">Linfáticos Solo Piernas · 40 min · 55€</option>
-              <option value="Reductores · 45 min · 80€">Reductores · 45 min · 80€</option>
-              <option value="Ventosas · 45 min · 40€">Ventosas · 45 min · 40€</option>
-              <option value="Relajantes Completo · 1 hora · 50€">Relajantes Completo · 1 hora · 50€</option>
-              <option value="Deportivos · 40 min · 50€">Deportivos · 40 min · 50€</option>
-              <option value="Spa de Manos · 40 min · 50€">Spa de Manos · 40 min · 50€</option>
-              <option value="Spa de Pies · 40 min · 50€">Spa de Pies · 40 min · 50€</option>
-            </select>
-          </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="inputNote">Nota (opcional)</label>
@@ -3159,16 +3167,51 @@ function renderCalendar() {
   }
 }
 
-const allSlots = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+// ===== DURACIÓN VARIABLE POR TRATAMIENTO =====
+// Los inicios se ofrecen sobre una grilla de 15 min dentro de las ventanas de atención.
+// Cada reserva ocupa su duración real + un buffer posterior, y ese bloque completo es
+// lo que impide ofrecer otro turno solapado.
+const SLOT_STEP_MIN       = 15;   // separación entre inicios ofrecidos
+const BOOKING_BUFFER_MIN  = 15;   // margen tras cada sesión (cambio de sábanas, limpieza)
+const DEFAULT_DURATION_MIN = 60;  // fallback: reservas viejas sin durationMin y servicios sin data-duration
+
+// Ventanas de atención. "end" es la hora límite para que una sesión TERMINE.
+const WORK_WINDOWS = [
+  { start: '10:00', end: '13:00' },
+  { start: '14:00', end: '19:00' },
+];
+
+const toMin  = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+const toHHMM = (min)  => `${String(Math.floor(min / 60)).padStart(2,'0')}:${String(min % 60).padStart(2,'0')}`;
+
+// Duración del servicio elegido, leída del data-duration del <option>.
+function getServiceDuration(serviceValue) {
+  const opt = [...document.getElementById('inputService').options].find(o => o.value === serviceValue);
+  const d = opt ? Number(opt.dataset.duration) : NaN;
+  return Number.isFinite(d) && d > 0 ? d : DEFAULT_DURATION_MIN;
+}
+
+// Inicios posibles para una sesión de esa duración: cada 15 min, siempre que la sesión
+// entre completa antes del cierre de la ventana. El buffer no se exige contra el cierre
+// (una sesión puede terminar justo a la hora de cierre).
+function buildCandidateStarts(durationMin) {
+  const starts = [];
+  WORK_WINDOWS.forEach(w => {
+    const wEnd = toMin(w.end);
+    for (let t = toMin(w.start); t + durationMin <= wEnd; t += SLOT_STEP_MIN) starts.push(t);
+  });
+  return starts;
+}
 
 // Lee bloqueos manuales (colección "horarios") y reservas ya pagadas (colección
-// "reservas") para ese día y devuelve { fullDayBlocked, blockedTimes }.
+// "reservas") para ese día y devuelve { fullDayBlocked, busy } con los intervalos ocupados.
 // Si Firestore falla, se abre "fail-open" (se muestran todos los horarios) y se
 // confía en el aviso de "Cecilia confirma por WhatsApp" como respaldo — no hay
 // forma de bloquear atómicamente sin backend, así que dos clientas eligiendo el
 // mismo slot casi al mismo tiempo siguen siendo un caso borde posible.
 async function fetchAvailability(dateStr) {
-  const result = { fullDayBlocked: false, blockedTimes: [] };
+  // busy = intervalos [start, end) en minutos desde medianoche, ya con buffer incluido.
+  const result = { fullDayBlocked: false, busy: [] };
   try {
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
     const { getFirestore, doc, getDoc, collection, query, where, getDocs } =
@@ -3181,7 +3224,17 @@ async function fetchAvailability(dateStr) {
     if (horarioSnap.exists()) {
       const h = horarioSnap.data();
       result.fullDayBlocked = h.fullDayBlocked === true;
-      if (Array.isArray(h.manualBlocked)) result.blockedTimes.push(...h.manualBlocked);
+      // Cada entrada de manualBlocked es un slot de la misma grilla de 15 min que se usa
+      // para ofrecer inicios (migración de datos del 2026-08-16: los bloqueos que antes
+      // eran horas en punto quedaron expandidos a sus 4 sub-slots). Un bloqueo manual es
+      // tiempo tapado, no una sesión, así que no lleva buffer propio: la separación la
+      // aporta el buffer de la sesión candidata que se intenta encajar al lado.
+      if (Array.isArray(h.manualBlocked)) {
+        h.manualBlocked.forEach(t => {
+          const start = toMin(t);
+          result.busy.push({ start, end: start + SLOT_STEP_MIN });
+        });
+      }
     }
 
     if (!result.fullDayBlocked) {
@@ -3191,7 +3244,13 @@ async function fetchAvailability(dateStr) {
         where('status', '!=', 'cancelada')
       );
       const reservasSnap = await getDocs(q);
-      reservasSnap.forEach(d => result.blockedTimes.push(d.data().time));
+      reservasSnap.forEach(d => {
+        const r = d.data();
+        // Reservas anteriores a la duración variable no traen durationMin: 60 min por defecto.
+        const dur = Number(r.durationMin) > 0 ? Number(r.durationMin) : DEFAULT_DURATION_MIN;
+        const start = toMin(r.time);
+        result.busy.push({ start, end: start + dur + BOOKING_BUFFER_MIN });
+      });
     }
   } catch (err) {
     console.error('No se pudo comprobar disponibilidad real, se muestran todos los horarios:', err);
@@ -3222,7 +3281,14 @@ async function showTimeSlots(dateStr) {
   wrap.style.display = 'block';
   container.innerHTML = '<p class="time-slots-loading">Comprobando disponibilidad…</p>';
 
-  const { fullDayBlocked, blockedTimes } = await fetchAvailability(dateStr);
+  // Los horarios dependen de cuánto dura el tratamiento, así que hace falta elegirlo antes.
+  const service = document.getElementById('inputService').value;
+  if (!service) {
+    container.innerHTML = '<p class="time-slots-empty">Elegí primero el tratamiento: los horarios libres dependen de cuánto dura la sesión.</p>';
+    return;
+  }
+
+  const { fullDayBlocked, busy } = await fetchAvailability(dateStr);
 
   // Si la clienta ya eligió otro día mientras esperábamos la respuesta, esta
   // respuesta quedó vieja — no pisar lo que se está mostrando ahora.
@@ -3233,10 +3299,17 @@ async function showTimeSlots(dateStr) {
     return;
   }
 
-  const available = allSlots.filter(t => !blockedTimes.includes(t));
+  // Un inicio sirve si su bloque (sesión + buffer) no pisa ningún bloque ya ocupado.
+  const dur = getServiceDuration(service);
+  const available = buildCandidateStarts(dur)
+    .filter(s => {
+      const end = s + dur + BOOKING_BUFFER_MIN;
+      return !busy.some(b => s < b.end && b.start < end);
+    })
+    .map(toHHMM);
 
   if (available.length === 0) {
-    container.innerHTML = '<p class="time-slots-empty">No quedan horarios libres este día. Elegí otra fecha.</p>';
+    container.innerHTML = '<p class="time-slots-empty">No quedan horarios libres este día para ese tratamiento. Elegí otra fecha o un tratamiento más corto.</p>';
     return;
   }
 
@@ -3258,7 +3331,15 @@ function updateSummary() {
   }
 }
 
-document.getElementById('inputService').addEventListener('change', updateSummary);
+// Cambiar de tratamiento cambia la duración y por lo tanto los horarios que entran:
+// hay que recalcular la grilla y descartar la hora elegida si ya no es válida.
+document.getElementById('inputService').addEventListener('change', () => {
+  if (selectedDate) {
+    selectedTime = null;
+    showTimeSlots(selectedDate);
+  }
+  updateSummary();
+});
 
 document.getElementById('calPrev').addEventListener('click', () => {
   viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
@@ -3312,7 +3393,9 @@ document.getElementById('btnBook').addEventListener('click', () => {
 
   // Guardar datos de la reserva para recuperarlos después del pago
   // (dateISO en formato YYYY-MM-DD, además del date legible, para el doc de Firestore)
-  const bookingData = { name, phone, service, date: `${d}/${m}/${y}`, dateISO: selectedDate, time: selectedTime, note };
+  // durationMin viaja con la reserva para que la agenda sepa cuánto ocupa realmente.
+  // Se resuelve acá (no al volver de Stripe) por si el catálogo cambia mientras tanto.
+  const bookingData = { name, phone, service, date: `${d}/${m}/${y}`, dateISO: selectedDate, time: selectedTime, note, durationMin: getServiceDuration(service) };
   localStorage.setItem('hasu_pending_booking', JSON.stringify(bookingData));
 
   // Mostrar resumen en el panel de pago
@@ -3682,6 +3765,10 @@ async function saveReservaToFirestore(b) {
       phone: b.phone,
       service: b.service,
       note: b.note || '',
+      // Campo nuevo: minutos reales de la sesión (sin el buffer, que es una constante
+      // del sistema y no un dato de la reserva). Las reglas usan hasAll, así que sumar
+      // una key extra no afecta el create.
+      durationMin: Number(b.durationMin) > 0 ? Number(b.durationMin) : DEFAULT_DURATION_MIN,
       depositPaid: true,
       status: 'pendiente_confirmacion',
       createdAt: serverTimestamp()

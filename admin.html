@@ -177,13 +177,57 @@
   .status-pill.cancelada { background: rgba(201,122,155,0.18); color: var(--terracotta); }
 
   /* ---- CALENDARIO ---- */
+  /* 4 columnas de 15 min = una fila por hora exacta. Se mantiene en móvil a propósito:
+     con 3 columnas las filas dejarían de coincidir con las horas y la grilla se vuelve
+     ilegible. En pantalla chica se achica la tipografía, no el número de columnas. */
   .slot-toggle-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    gap: 0.35rem;
+  }
+  .slot-toggle-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  /* Resumen de bloqueos con referencia, agrupados por tramo contiguo. Es el único lugar
+     donde se muestra el nombre de la clienta: en la grilla fina se repetiría 4 veces. */
+  .slot-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.6rem 0.7rem;
+    background: var(--cream);
+    border: 1px solid var(--stone);
+    border-radius: 2px;
+  }
+  .slot-summary-row {
+    display: flex;
+    align-items: baseline;
     gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--bark-soft);
+  }
+  .slot-summary-range { flex-shrink: 0; font-variant-numeric: tabular-nums; color: var(--terracotta); }
+  .slot-summary-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot-summary-edit {
+    flex-shrink: 0;
+    padding: 0 0.2rem;
+    font-size: 0.75rem;
+    color: var(--bark-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .slot-summary-edit:hover { color: var(--terracotta); }
+
+  .slot-window-title {
+    margin-top: 0.2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bark-soft);
+    opacity: 0.75;
   }
   @media (max-width: 480px) {
-    .slot-toggle-grid { grid-template-columns: repeat(3, 1fr); }
+    .slot-toggle-grid { gap: 0.25rem; }
   }
   .slot-toggle {
     display: flex;
@@ -192,8 +236,8 @@
     justify-content: center;
     gap: 0.15rem;
     position: relative;
-    min-height: 2.7rem;
-    padding: 0.55rem 0.35rem;
+    min-height: 2.1rem;
+    padding: 0.4rem 0.2rem;
     border: 1px solid var(--stone);
     background: var(--cream);
     color: var(--bark-soft);
@@ -205,28 +249,13 @@
     transition: background 0.2s, color 0.2s, border-color 0.2s;
   }
   .slot-toggle.blocked { background: var(--terracotta); color: var(--white); border-color: var(--terracotta); }
-  .slot-toggle-time { font-size: 0.78rem; line-height: 1.2; }
-  .slot-toggle-label {
-    max-width: 100%;
-    padding: 0 0.9rem;
-    font-size: 0.6rem;
-    line-height: 1.2;
-    color: rgba(255,255,255,0.85);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .slot-toggle-edit {
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    font-size: 0.65rem;
-    line-height: 1;
-    padding: 2px;
-    color: rgba(255,255,255,0.75);
-    cursor: pointer;
-  }
-  .slot-toggle-edit:hover { color: var(--white); }
+  /* Slot que está siendo editado en el editor inline: se resalta para no perderlo de
+     vista entre 32 casillas. */
+  .slot-toggle.editing { outline: 2px solid var(--moss); outline-offset: 1px; }
+  .slot-toggle-time { font-size: 0.72rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  /* Punto en la casilla donde vive la referencia del tramo (la clave real en
+     manualLabels). El texto va en el resumen de arriba, no acá. */
+  .slot-toggle-dot { font-size: 0.6rem; line-height: 1; color: rgba(255,255,255,0.9); }
 
   .slot-label-editor {
     margin-top: 0.9rem;
@@ -426,7 +455,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">Horarios bloqueados manualmente</label>
-      <div class="slot-toggle-grid" id="slotToggleGrid"></div>
+      <div class="slot-toggle-wrap" id="slotToggleGrid"></div>
       <div class="slot-label-editor" id="slotLabelEditor" style="display:none;">
         <label class="form-label" id="slotLabelEditorFor">Referencia</label>
         <div class="slot-label-editor-row">
@@ -813,7 +842,42 @@
   }
 
   // ===== CALENDARIO =====
-  const CAL_ALL_SLOTS = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+  // Grilla de bloqueo manual, en pasos de 15 min. DUPLICADO INTENCIONAL de las constantes
+  // de index.html (igual que lo estaba CAL_ALL_SLOTS): los dos archivos son páginas sueltas
+  // sin módulos compartidos. Si cambian las ventanas de atención o el paso, hay que tocar
+  // los DOS archivos o el panel y el sitio público dejan de coincidir.
+  const CAL_SLOT_STEP_MIN = 15;
+  const CAL_WORK_WINDOWS = [
+    { name: 'Mañana', start: '10:00', end: '13:00' },
+    { name: 'Tarde',  start: '14:00', end: '19:00' },
+  ];
+
+  const calToMin  = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+  const calToHHMM = (min)  => `${String(Math.floor(min / 60)).padStart(2,'0')}:${String(min % 60).padStart(2,'0')}`;
+
+  // Slots por ventana. El último slot de cada ventana ARRANCA 15 min antes del cierre
+  // (10:00–13:00 termina en 12:45), porque cada casilla representa el bloque que empieza ahí.
+  function buildCalWindowSlots(w) {
+    const slots = [];
+    const end = calToMin(w.end);
+    for (let t = calToMin(w.start); t < end; t += CAL_SLOT_STEP_MIN) slots.push(calToHHMM(t));
+    return slots;
+  }
+  const CAL_ALL_SLOTS = CAL_WORK_WINDOWS.flatMap(buildCalWindowSlots);
+
+  // Duración variable: las reservas nuevas traen durationMin; las viejas no, y se asumen
+  // de 1 h para que la agenda no rompa con datos históricos. El buffer posterior es una
+  // constante del sitio público y no se muestra acá: esto es el rango real de la sesión.
+  const RESERVA_DEFAULT_DURATION_MIN = 60;
+
+  function reservaTimeRange(r) {
+    if (!r.time || !/^\d{1,2}:\d{2}$/.test(r.time)) return r.time || '—';
+    const dur = Number(r.durationMin) > 0 ? Number(r.durationMin) : RESERVA_DEFAULT_DURATION_MIN;
+    const [h, m] = r.time.split(':').map(Number);
+    const end = h * 60 + m + dur;
+    const endStr = `${String(Math.floor(end / 60)).padStart(2,'0')}:${String(end % 60).padStart(2,'0')}`;
+    return `${r.time}–${endStr}`;
+  }
   // hora -> texto de referencia libre (solo tiene entrada si la hora está bloqueada)
   let calBlockedMap = new Map();
   // hora que está siendo editada en el editor inline (null = editor cerrado)
@@ -847,55 +911,147 @@
     else if (e.key === 'Escape') { e.preventDefault(); closeSlotLabelEditor(); }
   });
 
-  function renderSlotToggles() {
-    const grid = document.getElementById('slotToggleGrid');
-    grid.innerHTML = '';
+  // Agrupa los slots bloqueados en tramos contiguos para mostrar cada referencia una sola
+  // vez sobre su rango, en vez de repetirla o dejarla colgada de una casilla de 15 min.
+  //
+  // Un tramo se corta cuando:
+  //   - el slot siguiente no es bloqueado, o no es contiguo (el hueco del mediodía, o el
+  //     salto entre ventanas de atención), o
+  //   - el slot siguiente trae una referencia propia distinta de la del tramo en curso.
+  //     Vale también cuando el tramo en curso NO tiene referencia: si no se cortara ahí,
+  //     un bloqueo suelto anterior se tragaría a la clienta y el rango arrancaría antes de
+  //     donde está anclado su nombre (día entero bloqueado + Andrea a las 11:00 se leería
+  //     como "10:00–13:00 · Andrea"). Un tramo nunca empieza antes de su propia referencia.
+  //
+  // Hacia adelante sí se extiende: el rango que se muestra es el del BLOQUEO contiguo, no
+  // la duración real de esa clienta, porque el dato no la registra. Con el día entero
+  // bloqueado, Andrea se lee "11:00–13:00" — es todo lo que se sabe con certeza.
+  function groupBlockedSlots() {
+    const groups = [];
+    let current = null;
+
     CAL_ALL_SLOTS.forEach(t => {
       const isBlocked = calBlockedMap.has(t);
+      if (!isBlocked) { current = null; return; }
+
       const label = calBlockedMap.get(t) || '';
+      const contiguous = current && calToMin(t) === calToMin(current.slots[current.slots.length - 1]) + CAL_SLOT_STEP_MIN;
+      const startsNewLabel = label && current && label !== current.label;
 
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slot-toggle' + (isBlocked ? ' blocked' : '');
-
-      const timeSpan = document.createElement('span');
-      timeSpan.className = 'slot-toggle-time';
-      timeSpan.textContent = t;
-      btn.appendChild(timeSpan);
-
-      if (isBlocked && label) {
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'slot-toggle-label';
-        labelSpan.title = label;
-        labelSpan.textContent = label;
-        btn.appendChild(labelSpan);
+      if (!contiguous || startsNewLabel) {
+        current = { slots: [t], label, anchor: label ? t : null };
+        groups.push(current);
+        return;
       }
 
-      if (isBlocked) {
-        const editSpan = document.createElement('span');
-        editSpan.className = 'slot-toggle-edit';
-        editSpan.textContent = '✎';
-        editSpan.title = 'Editar referencia';
-        editSpan.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openSlotLabelEditor(t);
-        });
-        btn.appendChild(editSpan);
-      }
+      current.slots.push(t);
+      if (label && !current.label) { current.label = label; current.anchor = t; }
+    });
 
-      btn.addEventListener('click', () => {
-        if (calBlockedMap.has(t)) {
-          calBlockedMap.delete(t);
-          if (calEditingSlot === t) closeSlotLabelEditor();
-          renderSlotToggles();
+    return groups.map(g => ({
+      ...g,
+      start: g.slots[0],
+      // El tramo termina cuando termina su último slot, no cuando empieza.
+      end: calToHHMM(calToMin(g.slots[g.slots.length - 1]) + CAL_SLOT_STEP_MIN),
+      // Sin referencia, el editor se ancla al primer slot del tramo.
+      anchor: g.anchor || g.slots[0],
+    }));
+  }
+
+  function renderSlotToggles() {
+    const wrap = document.getElementById('slotToggleGrid');
+    wrap.innerHTML = '';
+
+    const groups = groupBlockedSlots();
+
+    // --- Resumen: un renglón por tramo bloqueado, con su rango y su referencia ---
+    if (groups.length) {
+      const summary = document.createElement('div');
+      summary.className = 'slot-summary';
+
+      groups.forEach(g => {
+        const row = document.createElement('div');
+        row.className = 'slot-summary-row';
+
+        const range = document.createElement('span');
+        range.className = 'slot-summary-range';
+        range.textContent = `${g.start}–${g.end}`;
+        row.appendChild(range);
+
+        const label = document.createElement('span');
+        label.className = 'slot-summary-label';
+        if (g.label) {
+          label.textContent = `· ${g.label}`;
+          label.title = g.label;
         } else {
-          calBlockedMap.set(t, '');
-          renderSlotToggles();
-          openSlotLabelEditor(t);
+          label.textContent = '· sin referencia';
+          label.style.opacity = '0.55';
         }
+        row.appendChild(label);
+
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'slot-summary-edit';
+        edit.textContent = '✎';
+        edit.title = g.label ? 'Editar referencia' : 'Agregar referencia';
+        edit.addEventListener('click', () => openSlotLabelEditor(g.anchor));
+        row.appendChild(edit);
+
+        summary.appendChild(row);
       });
 
-      grid.appendChild(btn);
+      wrap.appendChild(summary);
+    }
+
+    // --- Grilla: una casilla por slot de 15 min, cuatro por fila = una hora por fila ---
+    CAL_WORK_WINDOWS.forEach(w => {
+      const title = document.createElement('div');
+      title.className = 'slot-window-title';
+      title.textContent = `${w.name} · ${w.start}–${w.end}`;
+      wrap.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'slot-toggle-grid';
+
+      buildCalWindowSlots(w).forEach(t => {
+        const isBlocked = calBlockedMap.has(t);
+        const hasLabel = isBlocked && !!calBlockedMap.get(t);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-toggle'
+          + (isBlocked ? ' blocked' : '')
+          + (calEditingSlot === t ? ' editing' : '');
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'slot-toggle-time';
+        timeSpan.textContent = t;
+        btn.appendChild(timeSpan);
+
+        // Marca dónde está anclada la referencia; el texto se lee en el resumen.
+        if (hasLabel) {
+          const dot = document.createElement('span');
+          dot.className = 'slot-toggle-dot';
+          dot.textContent = '•';
+          dot.title = calBlockedMap.get(t);
+          btn.appendChild(dot);
+        }
+
+        btn.addEventListener('click', () => {
+          if (calBlockedMap.has(t)) {
+            calBlockedMap.delete(t);
+            if (calEditingSlot === t) closeSlotLabelEditor();
+            renderSlotToggles();
+          } else {
+            calBlockedMap.set(t, '');
+            renderSlotToggles();
+          }
+        });
+
+        grid.appendChild(btn);
+      });
+
+      wrap.appendChild(grid);
     });
   }
 
@@ -997,7 +1153,7 @@
         const li = document.createElement('li');
         li.innerHTML = `
           <div class="reserva-row-top">
-            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(r.time)}</span>
+            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(reservaTimeRange(r))}</span>
             <span class="status-pill pendiente">Pendiente</span>
           </div>
           <div>${escapeHtml(r.name) || '—'} · ${escapeHtml(r.phone) || '—'}</div>
@@ -1063,7 +1219,7 @@
         const li = document.createElement('li');
         li.innerHTML = `
           <div class="reserva-row-top">
-            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(r.time)}</span>
+            <span class="reserva-name">${escapeHtml(r.date)} · ${escapeHtml(reservaTimeRange(r))}</span>
             <span class="status-pill confirmada">Confirmada</span>
           </div>
           <div>${escapeHtml(r.name) || '—'} · ${escapeHtml(r.phone) || '—'}</div>
