@@ -382,6 +382,28 @@
   .promo-actions { display: flex; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
   .promo-actions .btn { width: auto; padding: 0.55rem 1.1rem; margin-top: 0; font-size: 0.65rem; }
   .promo-warn { font-size: 0.75rem; color: var(--terracotta); margin-top: 0.9rem; }
+
+  /* Confirmación propia para eliminar promos. Reemplaza al confirm() nativo por el mismo
+     motivo que el editor de referencias del calendario reemplazó a prompt(): los diálogos
+     del navegador no se pueden estilar y cortan el uso diario del panel. */
+  .promo-modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(46, 26, 46, 0.55);
+    align-items: center; justify-content: center;
+    padding: 1.5rem;
+  }
+  .promo-modal {
+    background: var(--white); border: 1px solid var(--stone);
+    padding: 1.8rem; width: 100%; max-width: 380px;
+  }
+  .promo-modal-title { font-size: 0.95rem; color: var(--bark); margin-bottom: 0.8rem; line-height: 1.5; }
+  .promo-modal-text {
+    font-size: 0.82rem; color: var(--bark-soft); background: var(--sand);
+    padding: 0.7rem 0.9rem; margin-bottom: 1.4rem;
+    line-height: 1.5; overflow-wrap: anywhere;
+  }
+  .promo-modal-actions { display: flex; gap: 0.7rem; }
+  .promo-modal-actions .btn { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -538,6 +560,19 @@
   <div class="card">
     <h2>Próximas reservas confirmadas</h2>
     <div id="confirmedWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- Fuera de #panelScreen a propósito: es un overlay fixed sobre toda la pantalla, no
+     contenido de una card. -->
+<div class="promo-modal-overlay" id="promoDeleteModal" style="display:none;">
+  <div class="promo-modal" role="dialog" aria-modal="true" aria-labelledby="promoDeleteTitle">
+    <p class="promo-modal-title" id="promoDeleteTitle">¿Eliminar esta promoción? No se puede deshacer.</p>
+    <p class="promo-modal-text" id="promoDeleteText"></p>
+    <div class="promo-modal-actions">
+      <button class="btn btn-danger" id="promoDeleteConfirm">Eliminar</button>
+      <button class="btn btn-outline" id="promoDeleteCancel">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -1409,6 +1444,42 @@
     return (p.useAiCopy && p.aiCopy) ? p.aiCopy : p.rawText;
   }
 
+  // ---- Confirmación de borrado (modal propio, no confirm() nativo) ----
+  const promoDeleteModal = document.getElementById('promoDeleteModal');
+  let promoDeleteResolve = null;
+
+  // Devuelve una promesa que resuelve true/false. Así el handler de borrado se lee igual
+  // que cuando usaba confirm(), solo que con await.
+  function askDeletePromo(text) {
+    document.getElementById('promoDeleteText').textContent = text || '—';
+    promoDeleteModal.style.display = 'flex';
+    return new Promise((resolve) => { promoDeleteResolve = resolve; });
+  }
+
+  function closePromoDeleteModal(result) {
+    promoDeleteModal.style.display = 'none';
+    // Se vacía la referencia ANTES de resolver: si no, un segundo cierre (Escape justo
+    // después del click) volvería a resolver una promesa ya resuelta.
+    const resolve = promoDeleteResolve;
+    promoDeleteResolve = null;
+    if (resolve) resolve(result);
+  }
+
+  document.getElementById('promoDeleteConfirm').addEventListener('click', () => closePromoDeleteModal(true));
+  document.getElementById('promoDeleteCancel').addEventListener('click', () => closePromoDeleteModal(false));
+  // Click afuera cierra sin eliminar. Se compara contra el overlay para que un click
+  // adentro del cuadro no burbujee y lo cierre.
+  promoDeleteModal.addEventListener('click', (e) => {
+    if (e.target === promoDeleteModal) closePromoDeleteModal(false);
+  });
+  // Escape también cancela, igual que el editor de referencias del calendario.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && promoDeleteModal.style.display !== 'none') {
+      e.preventDefault();
+      closePromoDeleteModal(false);
+    }
+  });
+
   async function loadPromos() {
     const wrap = document.getElementById('promoListWrap');
     const warn = document.getElementById('promoActiveWarn');
@@ -1461,7 +1532,7 @@
           const action = btn.dataset.promoAction;
           const promo = promos.find((p) => p.id === id);
           // deleteDoc no se puede deshacer y la promo no queda archivada en ningún lado.
-          if (action === 'delete' && !confirm('¿Eliminar esta promoción? No se puede deshacer.')) return;
+          if (action === 'delete' && !(await askDeletePromo(promo ? promoDisplayText(promo) : ''))) return;
 
           wrap.querySelectorAll('button[data-promo-action]').forEach((b) => b.disabled = true);
           try {
