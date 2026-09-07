@@ -106,10 +106,64 @@
     opacity: 0.6;
   }
 
+  /* FRANJA DE PROMOCIONES */
+  /* Oculta por default (atributo hidden). Solo se muestra si Firestore devuelve promos
+     activas que el visitante no cerró: así no hay parpadeo ni hueco mientras carga. */
+  .promo-strip {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    /* 998, por debajo de nav (1000) y de .nav-close-overlay (999), a propósito: con el
+       menú mobile abierto la franja no debe quedar flotando encima. Y sin EMPATES de
+       z-index entre hermanos — un empate se resuelve por orden en el DOM y ese patrón
+       ya costó el bug del menú mobile. */
+    z-index: 998;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 4rem;
+    background: var(--bark);
+    color: var(--cream);
+  }
+  .promo-strip[hidden] { display: none; }
+  .promo-strip-items {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem 0.9rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+    text-align: center;
+  }
+  /* El "·" se dibuja en CSS y no va en el texto: así no queda suelto cuando se muestra
+     una sola promo, ni colgando al final de una línea cuando bajan a dos en mobile. */
+  .promo-strip-item + .promo-strip-item::before {
+    content: '·';
+    margin-right: 0.9rem;
+    opacity: 0.5;
+  }
+  .promo-strip-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--cream);
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 0.3rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+  .promo-strip-close:hover { opacity: 1; }
+
   /* NAV */
   nav {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    /* El nav baja exactamente lo que mida la franja, medido en JS. Sin franja la var no
+       existe y el fallback 0px deja el nav igual que antes de este cambio. */
+    top: var(--promo-strip-h, 0px);
+    left: 0; right: 0;
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -1670,7 +1724,24 @@
     font-size: 0.68rem; color: var(--stone);
     text-align: center; margin-top: 1rem; line-height: 1.6;
   }
+  /* Mismo estilo que tenía .summer-badge, ahora genérico: lo llena la promo activa de
+     mayor prioridad, o queda oculto si no hay ninguna. */
+  .promo-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--terracotta); color: var(--white);
+    font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.5rem 1rem; margin-top: 2rem;
+    line-height: 1.5;
+  }
+  .promo-badge[hidden] { display: none; }
+
   @media (max-width: 900px) {
+    /* En mobile la franja se achica y puede pasar a dos líneas: por eso el alto se mide
+       en JS en vez de hardcodearse. */
+    .promo-strip { padding: 0.45rem 1rem; gap: 0.4rem; }
+    .promo-strip-items { font-size: 0.66rem; gap: 0.2rem 0.7rem; }
+    .promo-strip-item + .promo-strip-item::before { margin-right: 0.7rem; }
+
     .giftcard-wrap { grid-template-columns: 1fr; }
     .giftcards { padding: 5rem 1.5rem; }
     .bonos { padding: 5rem 1.5rem; }
@@ -1681,6 +1752,13 @@
 </style>
 </head>
 <body>
+
+<!-- FRANJA DE PROMOCIONES — arranca con hidden y sin ocupar alto. La llena
+     loadPromosPublicas() solo si hay promos activas sin cerrar. -->
+<div class="promo-strip" id="promoStrip" hidden>
+  <div class="promo-strip-items" id="promoStripItems"></div>
+  <button class="promo-strip-close" id="promoStripClose" type="button" aria-label="Cerrar promociones">✕</button>
+</div>
 
 <!-- NAV -->
 <nav id="mainNav">
@@ -2836,6 +2914,7 @@
           <li>Válido durante 3 meses desde la compra</li>
           <li>Reservas flexibles, una sesión a la vez</li>
         </ul>
+        <span class="promo-badge" id="promoBadge" hidden></span>
       </div>
 
       <div class="bono-divider"></div>
@@ -4068,6 +4147,123 @@ function gcDownload() {
   a.download = 'hasu-giftcard.png';
   a.href = canvas.toDataURL('image/png');
   a.click();
+}
+
+// ===== PROMOCIONES (franja superior + badge en Bonos) =====
+// Lectura pública de la colección "promos", cargada aparte del render: si Firestore
+// tarda o falla, el sitio se ve exactamente igual que si no hubiera promos.
+const PROMOS_VISIBLES_MAX = 2;
+const PROMOS_CERRADAS_KEY = 'hasu_promos_cerradas';
+
+// El texto que se publica de verdad. Mismo criterio que usa admin.html para listarlas.
+function promoTexto(p) {
+  return (p.useAiCopy && p.aiCopy) ? p.aiCopy : (p.rawText || '');
+}
+
+function promosCerradas() {
+  try {
+    const guardadas = JSON.parse(localStorage.getItem(PROMOS_CERRADAS_KEY));
+    return Array.isArray(guardadas) ? guardadas : [];
+  } catch (_) {
+    // localStorage bloqueado o JSON corrupto: se trata como "no cerró ninguna".
+    return [];
+  }
+}
+
+// El nav es position:fixed en top:0, así que la franja se le montaría encima: baja
+// exactamente lo que la franja mide. Medido y no hardcodeado porque en mobile puede
+// pasar a dos líneas. Con la franja oculta vuelve a 0 y el nav queda como siempre.
+function ajustarAlturaFranja() {
+  const strip = document.getElementById('promoStrip');
+  const alto = (strip && !strip.hidden) ? strip.getBoundingClientRect().height : 0;
+  document.documentElement.style.setProperty('--promo-strip-h', alto + 'px');
+}
+window.addEventListener('resize', ajustarAlturaFranja);
+
+function renderPromoBadge(promo) {
+  const badge = document.getElementById('promoBadge');
+  if (!badge) return;
+  // textContent, no innerHTML: el texto lo escribe Cecilia desde el panel y no tiene que
+  // interpretarse como HTML.
+  badge.textContent = promoTexto(promo);
+  badge.hidden = false;
+}
+
+function renderPromoStrip(visibles) {
+  const strip = document.getElementById('promoStrip');
+  const items = document.getElementById('promoStripItems');
+  if (!strip || !items) return;
+
+  const cerradas = promosCerradas();
+  const abiertas = visibles.filter((p) => !cerradas.includes(p.id));
+  // Todas cerradas en este navegador: la franja no se muestra y el nav no se mueve.
+  if (abiertas.length === 0) return;
+
+  items.innerHTML = '';
+  abiertas.forEach((p) => {
+    const span = document.createElement('span');
+    span.className = 'promo-strip-item';
+    span.textContent = promoTexto(p);
+    items.appendChild(span);
+  });
+
+  strip.hidden = false;
+  ajustarAlturaFranja();
+
+  document.getElementById('promoStripClose').addEventListener('click', () => {
+    // Se marcan como cerradas SOLO las que se estaban mostrando, no todas las activas:
+    // si mañana Cecilia publica una nueva, esa sí tiene que volver a aparecer.
+    const nuevas = cerradas.concat(abiertas.map((p) => p.id));
+    try {
+      localStorage.setItem(PROMOS_CERRADAS_KEY, JSON.stringify([...new Set(nuevas)]));
+    } catch (_) {
+      // Sin localStorage se cierra igual; vuelve a aparecer en la próxima carga.
+    }
+    strip.hidden = true;
+    ajustarAlturaFranja();
+  });
+}
+
+// Import dinámico, mismo patrón que saveBonoToFirestore/saveReservaToFirestore: evita
+// pelear con el orden de ejecución de este script clásico.
+async function loadPromosPublicas() {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, collection, query, where, getDocs } =
+      await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const snap = await getDocs(query(collection(db, 'promos'), where('active', '==', true)));
+
+    const promos = [];
+    snap.forEach((d) => promos.push({ id: d.id, ...d.data() }));
+
+    // Mismo orden que admin.html: order desc, createdAt de desempate para los docs que
+    // no lo tengan. En cliente, para no depender de un índice compuesto en Firestore.
+    promos.sort((a, b) =>
+      (b.order ?? 0) - (a.order ?? 0) ||
+      ((b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+    );
+
+    // Se descartan las que quedaron sin texto (por ej. useAiCopy con aiCopy vacío):
+    // ocuparían lugar en el tope de 2 sin mostrar nada.
+    const visibles = promos.filter((p) => promoTexto(p)).slice(0, PROMOS_VISIBLES_MAX);
+    if (visibles.length === 0) return;
+
+    renderPromoBadge(visibles[0]);
+    renderPromoStrip(visibles);
+  } catch (err) {
+    // Silencioso: que no cargue una promo no es un problema que le importe a la clienta.
+    console.error('No se pudieron cargar las promociones:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadPromosPublicas);
+} else {
+  loadPromosPublicas();
 }
 </script>
 </body>
