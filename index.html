@@ -1670,13 +1670,6 @@
     font-size: 0.68rem; color: var(--stone);
     text-align: center; margin-top: 1rem; line-height: 1.6;
   }
-  .summer-badge {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: var(--terracotta); color: var(--white);
-    font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 0.5rem 1rem; margin-top: 2rem;
-  }
-
   @media (max-width: 900px) {
     .giftcard-wrap { grid-template-columns: 1fr; }
     .giftcards { padding: 5rem 1.5rem; }
@@ -2248,9 +2241,15 @@
       <div class="service-name">Craneofacial</div>
       <div class="service-line"></div>
       <div class="service-desc">Trabaja el cráneo, la mandíbula y el cuero cabelludo para liberar tensiones, reducir cefaleas y restaurar el equilibrio del sistema craneosacral.</div>
-      <div class="service-footer">
-        <div class="service-price">30€</div>
-        <div class="service-duration">30 min</div>
+      <div class="service-footer" style="flex-direction:column; gap:0.4rem;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%">
+          <div class="service-price">30€</div>
+          <div class="service-duration">30 min</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; width:100%; opacity:0.75">
+          <div class="service-price" style="font-size:1.2rem">50€</div>
+          <div class="service-duration">1 hora</div>
+        </div>
       </div>
     </div>
 
@@ -2623,10 +2622,12 @@
                    calcular los horarios libres; el texto del value queda intacto porque es
                    lo que se guarda en Firestore y se envía por WhatsApp. Para cambiar una
                    duración, editar SOLO este atributo. -->
-              <option data-duration="60" value="🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€">🌞 Oferta Verano: Craneofacial Relajante · 1 hora · 50€</option>
               <option data-duration="30" value="Descontracturante · 30 min · 35€">Descontracturante · 30 min · 35€</option>
               <option data-duration="60" value="Descontracturante · 1 hora · 50€">Descontracturante · 1 hora · 50€</option>
               <option data-duration="30" value="Craneofacial · 30 min · 30€">Craneofacial · 30 min · 30€</option>
+              <!-- Nació como oferta de verano; terminada la temporada queda como opción
+                   regular al precio de 1 hora del resto del menú. -->
+              <option data-duration="60" value="Craneofacial · 1 hora · 50€">Craneofacial · 1 hora · 50€</option>
               <option data-duration="30" value="Facial Relajante · 30 min · 30€">Facial Relajante · 30 min · 30€</option>
               <option data-duration="30" value="Facial Intrabucal · 30 min · 40€">Facial Intrabucal · 30 min · 40€</option>
               <option data-duration="30" value="Masaje de Manos · 30 min · 30€">Masaje de Manos · 30 min · 30€</option>
@@ -2762,6 +2763,7 @@
               <option>Descontracturante · 30 min · 35€</option>
               <option>Descontracturante · 1 hora · 50€</option>
               <option>Craneofacial · 30 min · 30€</option>
+              <option>Craneofacial · 1 hora · 50€</option>
               <option>Facial Relajante · 30 min · 30€</option>
               <option>Facial Intrabucal · 30 min · 40€</option>
               <option>Masaje de Manos · 30 min · 30€</option>
@@ -2834,7 +2836,6 @@
           <li>Válido durante 3 meses desde la compra</li>
           <li>Reservas flexibles, una sesión a la vez</li>
         </ul>
-        <span class="summer-badge">🌞 También disponible: Craneofacial 1h por 50€ — oferta de verano</span>
       </div>
 
       <div class="bono-divider"></div>
