@@ -11,3 +11,7 @@ define('FIREBASE_WEB_API_KEY', 'AIzaSyBYTZfhePaKZQw9PJm4CdOhcr_-IHjaAgw');
 // API secrets de Measurement Protocol para generar el api_secret.
 define('GA4_MEASUREMENT_ID', 'G-XXXXXXXXXX');
 define('GA4_API_SECRET', 'REEMPLAZAR_API_SECRET');
+
+// API de Claude (Anthropic) — la usa generate-promo-copy.php para mejorar el texto de
+// las promos desde el panel. Se genera en https://console.anthropic.com/settings/keys
+define('ANTHROPIC_API_KEY', 'sk-ant-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');

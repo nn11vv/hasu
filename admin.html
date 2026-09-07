@@ -367,6 +367,21 @@
   .month-list .ml-type { color: var(--bark-soft); }
   .month-list .ml-meta { color: var(--stone); font-size: 0.75rem; }
   .mismatch-note { font-size: 0.75rem; color: var(--stone); margin-top: 0.9rem; }
+
+  /* ---- PROMOCIONES ---- */
+  textarea.form-input { resize: vertical; min-height: 3.4rem; line-height: 1.5; }
+  .promo-ai-error { font-size: 0.75rem; color: var(--terracotta); margin-top: 0.6rem; min-height: 1.1em; }
+  .promo-ai-result { margin-top: 1.1rem; }
+  .promo-choice { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .promo-list { list-style: none; margin-top: 1.6rem; }
+  .promo-list li { padding: 0.9rem 0; border-bottom: 1px solid var(--sand); font-size: 0.82rem; }
+  .promo-list li:last-child { border-bottom: none; }
+  .promo-row-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .promo-text { color: var(--bark); }
+  .promo-source { color: var(--stone); font-size: 0.72rem; }
+  .promo-actions { display: flex; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
+  .promo-actions .btn { width: auto; padding: 0.55rem 1.1rem; margin-top: 0; font-size: 0.65rem; }
+  .promo-warn { font-size: 0.75rem; color: var(--terracotta); margin-top: 0.9rem; }
 </style>
 </head>
 <body>
@@ -475,6 +490,47 @@
   </div>
 
   <div class="card">
+    <h2>Promociones</h2>
+    <div class="form-group">
+      <label class="form-label" for="promoRawText">Texto de la promoción</label>
+      <textarea class="form-input" id="promoRawText" rows="3" placeholder="Ej: Oferta limpieza facial"></textarea>
+    </div>
+
+    <button class="btn btn-outline" id="promoAiBtn">Mejorar con IA</button>
+    <p class="promo-ai-error" id="promoAiError"></p>
+
+    <div class="promo-ai-result" id="promoAiResult" style="display:none;">
+      <div class="form-group">
+        <label class="form-label" for="promoAiCopy">Versión mejorada (editable)</label>
+        <textarea class="form-input" id="promoAiCopy" rows="2"></textarea>
+      </div>
+      <div class="promo-choice">
+        <label class="fullday-toggle">
+          <input type="radio" name="promoUseAi" id="promoUseAiYes" value="ai" checked>
+          <span>Usar versión mejorada</span>
+        </label>
+        <label class="fullday-toggle">
+          <input type="radio" name="promoUseAi" id="promoUseAiNo" value="raw">
+          <span>Usar mi texto original</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="fullday-toggle-row">
+      <label class="fullday-toggle">
+        <input type="checkbox" id="promoActive" checked>
+        <span>Activa</span>
+      </label>
+    </div>
+
+    <button class="btn" id="promoSaveBtn">Guardar</button>
+    <p class="cal-save-note" id="promoSaveNote"></p>
+
+    <div id="promoListWrap"><p class="loading-note">Cargando…</p></div>
+    <p class="promo-warn" id="promoActiveWarn"></p>
+  </div>
+
+  <div class="card">
     <h2>Reservas pendientes de confirmar</h2>
     <div id="reservasWrap"><p class="loading-note">Cargando…</p></div>
   </div>
@@ -491,7 +547,7 @@
     getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, updateDoc, increment,
+    getFirestore, doc, getDoc, setDoc, updateDoc, increment, addDoc, deleteDoc,
     collection, query, where, orderBy, limit, getDocs, serverTimestamp, Timestamp
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -539,6 +595,7 @@
       loadConfirmedReservas();
       loadStripeSummary(user);
       loadMonthSummary();
+      loadPromos();
     } else {
       loginScreen.style.display = 'block';
       panelScreen.classList.remove('visible');
@@ -1248,6 +1305,180 @@
       });
     } catch (err) {
       wrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista.</p>';
+    }
+  }
+
+  // ===== PROMOCIONES =====
+  // Aviso, no límite: nada se rompe con 3 promos activas, solo se satura la web. Por eso
+  // el número vive acá y no en las reglas de Firestore.
+  const PROMO_ACTIVE_WARN_AT = 2;
+
+  const promoAiBtn    = document.getElementById('promoAiBtn');
+  const promoAiError  = document.getElementById('promoAiError');
+  const promoAiResult = document.getElementById('promoAiResult');
+  const promoAiCopy   = document.getElementById('promoAiCopy');
+
+  promoAiBtn.addEventListener('click', async () => {
+    const raw = document.getElementById('promoRawText').value.trim();
+    promoAiError.textContent = '';
+    if (!raw) {
+      promoAiError.textContent = 'Escribí primero el texto de la promoción.';
+      return;
+    }
+    // El endpoint valida el token igual, pero sin usuario no hay token que mandar.
+    const user = auth.currentUser;
+    if (!user) {
+      promoAiError.textContent = 'La sesión expiró. Volvé a entrar.';
+      return;
+    }
+
+    promoAiBtn.disabled = true;
+    promoAiBtn.textContent = 'Generando…';
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('api/generate-promo-copy.php', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: raw })
+      });
+      // El endpoint manda {success:false, error:'...'} TAMBIÉN en los códigos de error
+      // (400/401/500/502), y ese mensaje es el único accionable — por eso se lee el JSON
+      // en vez de cortar por res.ok.
+      const data = await res.json().catch(() => null);
+      if (!data || !data.success) {
+        promoAiError.textContent = (data && data.error) ? data.error : 'No se pudo generar el texto.';
+        return;
+      }
+      promoAiCopy.value = data.copy;
+      promoAiResult.style.display = 'block';
+      document.getElementById('promoUseAiYes').checked = true;
+    } catch (err) {
+      promoAiError.textContent = 'No se pudo contactar con el servidor.';
+    } finally {
+      // En finally para que un error deje el botón usable: el formulario nunca queda trabado.
+      promoAiBtn.disabled = false;
+      promoAiBtn.textContent = 'Mejorar con IA';
+    }
+  });
+
+  document.getElementById('promoSaveBtn').addEventListener('click', async () => {
+    const btn  = document.getElementById('promoSaveBtn');
+    const note = document.getElementById('promoSaveNote');
+    const raw     = document.getElementById('promoRawText').value.trim();
+    const aiCopy  = promoAiCopy.value.trim();
+    // El toggle solo cuenta si hay una versión mejorada cargada y no vacía: si no, se
+    // guardaría useAiCopy:true apuntando a un aiCopy vacío y la promo saldría en blanco.
+    const useAiCopy = promoAiResult.style.display !== 'none'
+      && document.getElementById('promoUseAiYes').checked
+      && aiCopy !== '';
+
+    if (!raw) {
+      note.textContent = 'Falta el texto de la promoción.';
+      return;
+    }
+
+    btn.disabled = true;
+    note.textContent = '';
+    try {
+      await addDoc(collection(db, 'promos'), {
+        rawText: raw,
+        aiCopy,
+        useAiCopy,
+        active: document.getElementById('promoActive').checked,
+        // order separado de createdAt: serverTimestamp() llega null en el snapshot local
+        // hasta que el server responde, así que ordenar solo por él deja la promo recién
+        // creada en un lugar impredecible de la lista.
+        order: Date.now(),
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('promoRawText').value = '';
+      promoAiCopy.value = '';
+      promoAiResult.style.display = 'none';
+      promoAiError.textContent = '';
+      note.textContent = 'Promoción guardada.';
+      loadPromos();
+    } catch (err) {
+      note.textContent = 'No se pudo guardar la promoción.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // El texto que se está usando de verdad. Mismo criterio en toda la card.
+  function promoDisplayText(p) {
+    return (p.useAiCopy && p.aiCopy) ? p.aiCopy : p.rawText;
+  }
+
+  async function loadPromos() {
+    const wrap = document.getElementById('promoListWrap');
+    const warn = document.getElementById('promoActiveWarn');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    warn.textContent = '';
+    try {
+      const snap = await getDocs(collection(db, 'promos'));
+      const promos = [];
+      snap.forEach((d) => promos.push({ id: d.id, ...d.data() }));
+      // Orden en cliente para no depender de un índice de Firestore, igual que las
+      // reservas. createdAt desempata los docs que se hayan guardado sin order.
+      promos.sort((a, b) =>
+        (b.order ?? 0) - (a.order ?? 0) ||
+        ((b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+      );
+
+      const activeCount = promos.filter((p) => p.active).length;
+      if (activeCount > PROMO_ACTIVE_WARN_AT) {
+        warn.textContent = 'Recomendado: no más de 2 promociones activas a la vez para no saturar la web.';
+      }
+
+      if (promos.length === 0) {
+        wrap.innerHTML = '<p class="empty-note">Todavía no hay promociones.</p>';
+        return;
+      }
+
+      const ul = document.createElement('ul');
+      ul.className = 'promo-list';
+      promos.forEach((p) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="promo-row-top">
+            <span class="promo-text">${escapeHtml(promoDisplayText(p)) || '—'}</span>
+            <span class="status-pill ${p.active ? 'confirmada' : 'cancelada'}">${p.active ? 'Activa' : 'Pausada'}</span>
+          </div>
+          <div class="promo-source">${(p.useAiCopy && p.aiCopy) ? 'Versión mejorada con IA' : 'Texto original'}</div>
+          <div class="promo-actions">
+            <button class="btn" data-promo-action="toggle" data-id="${p.id}">${p.active ? 'Desactivar' : 'Activar'}</button>
+            <button class="btn btn-danger" data-promo-action="delete" data-id="${p.id}">Eliminar</button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+      wrap.innerHTML = '';
+      wrap.appendChild(ul);
+
+      wrap.querySelectorAll('button[data-promo-action]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const action = btn.dataset.promoAction;
+          const promo = promos.find((p) => p.id === id);
+          // deleteDoc no se puede deshacer y la promo no queda archivada en ningún lado.
+          if (action === 'delete' && !confirm('¿Eliminar esta promoción? No se puede deshacer.')) return;
+
+          wrap.querySelectorAll('button[data-promo-action]').forEach((b) => b.disabled = true);
+          try {
+            if (action === 'toggle') {
+              await updateDoc(doc(db, 'promos', id), { active: !promo.active });
+            } else {
+              await deleteDoc(doc(db, 'promos', id));
+            }
+            loadPromos();
+          } catch (err) {
+            alert('No se pudo actualizar la promoción. Intentá de nuevo.');
+            wrap.querySelectorAll('button[data-promo-action]').forEach((b) => b.disabled = false);
+          }
+        });
+      });
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar la lista de promociones.</p>';
     }
   }
 </script>
