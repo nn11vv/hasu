@@ -388,6 +388,7 @@
   .promo-reservable-note { font-size: 0.75rem; color: var(--moss); min-height: 1.1em; margin-bottom: 0.4rem; line-height: 1.5; }
   /* Mismo elemento, dos estados: confirmación (moss) o datos faltantes (terracotta). */
   .promo-reservable-note.incompleto { color: var(--terracotta); }
+  .cal-save-note.error { color: var(--terracotta); }
   .promo-giftcard-warn { font-size: 0.75rem; color: var(--terracotta); line-height: 1.5; margin-bottom: 0.9rem; }
   .status-pill.reservable { background: rgba(168,157,200,0.22); color: var(--water); }
   .promo-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -549,7 +550,12 @@
       </div>
       <div class="form-group">
         <label class="form-label" for="promoPrice">Precio € (opcional)</label>
-        <input class="form-input" type="number" id="promoPrice" min="0" step="1" placeholder="50">
+        <!-- type="text" y NO "number": con type="number" el navegador descarta lo que no
+             sea un número puro y .value queda "" — sin marcar validity.badInput, así que
+             ni checkValidity() ni :invalid lo detectan. La coma es el separador decimal en
+             español ("50,00") y el € es lo natural de escribir, o sea que el modo obvio de
+             cargar el precio era justo el que se perdía. El parseo lo hace parsePrecio(). -->
+        <input class="form-input" type="text" inputmode="decimal" id="promoPrice" placeholder="50">
       </div>
     </div>
     <p class="promo-reservable-note" id="promoReservableNote"></p>
@@ -1399,11 +1405,20 @@
   const promoAiResult = document.getElementById('promoAiResult');
   const promoAiCopy   = document.getElementById('promoAiCopy');
 
+  // Acepta "50", "50,00", "50€", "50 €", "50.00". Devuelve 0 si no hay número válido.
+  function parsePrecio(txt) {
+    let limpio = String(txt ?? '').replace(/[^\d.,]/g, '');
+    // Con punto Y coma, el punto es separador de miles ("1.234,56") y se descarta.
+    if (limpio.includes(',') && limpio.includes('.')) limpio = limpio.replace(/\./g, '');
+    const n = parseFloat(limpio.replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
   function promoCamposExtra() {
     return {
       treatmentName: document.getElementById('promoTreatment').value.trim(),
       duration: Number(document.getElementById('promoDuration').value),
-      price: Number(document.getElementById('promoPrice').value)
+      price: parsePrecio(document.getElementById('promoPrice').value)
     };
   }
 
@@ -1427,25 +1442,37 @@
     return items.slice(0, -1).join(', ') + ' y ' + items[items.length - 1];
   }
 
+  // Fuente única de verdad sobre si la promo es reservable. La usan la nota en vivo y el
+  // corte del guardado: si cada una calculara lo suyo, el aviso y el bloqueo podrían
+  // contradecirse.
+  function promoEstadoReservable(textoPromo) {
+    const { treatmentName, duration, price } = promoCamposExtra();
+    const nombreEfectivo = promoNombreEfectivo(treatmentName, textoPromo);
+
+    // Se mira treatmentName crudo y no el efectivo: el texto de la promo siempre está, y
+    // si contara como "cargado" el aviso saltaría apenas Cecilia escribe el anuncio.
+    const algunoCargado = treatmentName !== '' || duration > 0 || price > 0;
+
+    const faltan = [];
+    if (nombreEfectivo === '') faltan.push('nombre del tratamiento');
+    if (!(duration > 0))       faltan.push('duración');
+    if (!(price > 0))          faltan.push('precio');
+
+    return { treatmentName, duration, price, nombreEfectivo, algunoCargado, faltan };
+  }
+
   function actualizarNotaReservable() {
     const nota = document.getElementById('promoReservableNote');
     const warn = document.getElementById('promoGiftcardWarn');
-    const { treatmentName, duration, price } = promoCamposExtra();
-    const nombreEfectivo = promoNombreEfectivo(treatmentName, promoTextoFormulario());
+    const { treatmentName, duration, price, nombreEfectivo, algunoCargado, faltan } =
+      promoEstadoReservable(promoTextoFormulario());
 
     nota.textContent = '';
     nota.classList.remove('incompleto');
     warn.textContent = '';
 
     // Nada tocado de los tres campos: es una promo-anuncio, el caso normal. Sin ruido.
-    // Se mira treatmentName crudo y no el efectivo: el texto de la promo siempre está,
-    // y si contara como "cargado" el aviso saltaría apenas Cecilia escribe el anuncio.
-    if (treatmentName === '' && !(duration > 0) && !(price > 0)) return;
-
-    const faltan = [];
-    if (nombreEfectivo === '') faltan.push('nombre del tratamiento');
-    if (!(duration > 0))       faltan.push('duración');
-    if (!(price > 0))          faltan.push('precio');
+    if (!algunoCargado) return;
 
     if (faltan.length > 0) {
       nota.classList.add('incompleto');
@@ -1533,8 +1560,21 @@
       && document.getElementById('promoUseAiYes').checked
       && aiCopy !== '';
 
+    note.classList.remove('error');
     if (!raw) {
+      note.classList.add('error');
       note.textContent = 'Falta el texto de la promoción.';
+      return;
+    }
+
+    // Corte por datos a medias. Antes esto guardaba una promo-anuncio en silencio y
+    // Cecilia se quedaba creyendo que había creado un tratamiento reservable: el error
+    // solo se veía mirando Firestore. O los tres campos, o ninguno.
+    const estado = promoEstadoReservable(useAiCopy ? aiCopy : raw);
+    if (estado.algunoCargado && estado.faltan.length > 0) {
+      actualizarNotaReservable();
+      note.classList.add('error');
+      note.textContent = `Faltan datos para que sea reservable: ${listaEnEspanol(estado.faltan)}.`;
       return;
     }
 
@@ -1552,15 +1592,12 @@
         order: Date.now(),
         createdAt: serverTimestamp()
       };
-      // Duración y precio no tienen default posible, así que siguen siendo obligatorios
-      // para que la promo sea reservable. El nombre sí: si quedó vacío se hereda el texto
-      // de la promo, para que la opción del select no pierda la palabra "oferta".
-      const { treatmentName, duration, price } = promoCamposExtra();
-      const nombreEfectivo = promoNombreEfectivo(treatmentName, useAiCopy ? aiCopy : raw);
-      if (nombreEfectivo !== '' && duration > 0 && price > 0) {
-        promoDoc.treatmentName = nombreEfectivo;
-        promoDoc.duration = duration;
-        promoDoc.price = price;
+      // Llegado acá, o están los tres o no hay ninguno: el corte de arriba ya descartó
+      // los estados a medias. El nombre puede venir heredado del texto de la promo.
+      if (estado.faltan.length === 0 && estado.algunoCargado) {
+        promoDoc.treatmentName = estado.nombreEfectivo;
+        promoDoc.duration = estado.duration;
+        promoDoc.price = estado.price;
       }
       await addDoc(collection(db, 'promos'), promoDoc);
 
