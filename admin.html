@@ -385,7 +385,9 @@
   .promo-fields-row { display: flex; gap: 0.9rem; flex-wrap: wrap; }
   .promo-fields-row .form-group { flex: 1; min-width: 130px; }
   /* min-height para que aparecer/desaparecer la nota no mueva el botón de abajo. */
-  .promo-reservable-note { font-size: 0.75rem; color: var(--moss); min-height: 1.1em; margin-bottom: 0.4rem; }
+  .promo-reservable-note { font-size: 0.75rem; color: var(--moss); min-height: 1.1em; margin-bottom: 0.4rem; line-height: 1.5; }
+  /* Mismo elemento, dos estados: confirmación (moss) o datos faltantes (terracotta). */
+  .promo-reservable-note.incompleto { color: var(--terracotta); }
   .promo-giftcard-warn { font-size: 0.75rem; color: var(--terracotta); line-height: 1.5; margin-bottom: 0.9rem; }
   .status-pill.reservable { background: rgba(168,157,200,0.22); color: var(--water); }
   .promo-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -1392,26 +1394,67 @@
   // entre los dos archivos: si allá se agrega un precio nuevo, hay que agregarlo acá.
   const PROMO_PRECIOS_GIFTCARD = [30, 35, 40, 50, 55, 75, 80];
 
-  // Los tres campos van juntos: una promo es "reservable" solo si están los tres.
+  const promoAiBtn    = document.getElementById('promoAiBtn');
+  const promoAiError  = document.getElementById('promoAiError');
+  const promoAiResult = document.getElementById('promoAiResult');
+  const promoAiCopy   = document.getElementById('promoAiCopy');
+
   function promoCamposExtra() {
-    const treatmentName = document.getElementById('promoTreatment').value.trim();
-    const duration = Number(document.getElementById('promoDuration').value);
-    const price = Number(document.getElementById('promoPrice').value);
-    const completos = treatmentName !== '' && duration > 0 && price > 0;
-    return { treatmentName, duration, price, completos };
+    return {
+      treatmentName: document.getElementById('promoTreatment').value.trim(),
+      duration: Number(document.getElementById('promoDuration').value),
+      price: Number(document.getElementById('promoPrice').value)
+    };
+  }
+
+  // El texto que la promo va a publicar, según cómo está el formulario ahora mismo.
+  function promoTextoFormulario() {
+    const usaAi = promoAiResult.style.display !== 'none'
+      && document.getElementById('promoUseAiYes').checked
+      && promoAiCopy.value.trim() !== '';
+    return usaAi ? promoAiCopy.value.trim() : document.getElementById('promoRawText').value.trim();
+  }
+
+  // Si Cecilia no completó el nombre, se hereda el texto de la promo. Sin esto la clienta
+  // vería en el select un tratamiento con precio pero sin ninguna pista de que es una
+  // oferta — que era justo el punto de la promo. Un nombre escrito a mano siempre gana.
+  function promoNombreEfectivo(treatmentName, textoPromo) {
+    return treatmentName !== '' ? treatmentName : (textoPromo || '').trim();
+  }
+
+  function listaEnEspanol(items) {
+    if (items.length === 1) return items[0];
+    return items.slice(0, -1).join(', ') + ' y ' + items[items.length - 1];
   }
 
   function actualizarNotaReservable() {
     const nota = document.getElementById('promoReservableNote');
     const warn = document.getElementById('promoGiftcardWarn');
-    const { treatmentName, duration, price, completos } = promoCamposExtra();
+    const { treatmentName, duration, price } = promoCamposExtra();
+    const nombreEfectivo = promoNombreEfectivo(treatmentName, promoTextoFormulario());
 
-    if (!completos) {
-      nota.textContent = '';
-      warn.textContent = '';
+    nota.textContent = '';
+    nota.classList.remove('incompleto');
+    warn.textContent = '';
+
+    // Nada tocado de los tres campos: es una promo-anuncio, el caso normal. Sin ruido.
+    // Se mira treatmentName crudo y no el efectivo: el texto de la promo siempre está,
+    // y si contara como "cargado" el aviso saltaría apenas Cecilia escribe el anuncio.
+    if (treatmentName === '' && !(duration > 0) && !(price > 0)) return;
+
+    const faltan = [];
+    if (nombreEfectivo === '') faltan.push('nombre del tratamiento');
+    if (!(duration > 0))       faltan.push('duración');
+    if (!(price > 0))          faltan.push('precio');
+
+    if (faltan.length > 0) {
+      nota.classList.add('incompleto');
+      nota.textContent = `Faltan datos para que sea reservable: ${listaEnEspanol(faltan)}.`;
       return;
     }
-    nota.textContent = `Se agregará como opción reservable: "${treatmentName} · ${PROMO_DURACION_LABEL[duration]} · ${price}€"`;
+
+    const heredado = treatmentName === '' ? ' (nombre tomado del texto de la promo)' : '';
+    nota.textContent = `Se agregará como opción reservable: "${nombreEfectivo} · ${PROMO_DURACION_LABEL[duration]} · ${price}€"${heredado}`;
     // Aviso, no bloqueo: la promo igual sirve como turno reservable, lo único que no
     // puede es venderse como gift card sin un Payment Link para ese monto.
     warn.textContent = PROMO_PRECIOS_GIFTCARD.includes(price)
@@ -1419,16 +1462,14 @@
       : 'Esta oferta no podrá comprarse como Gift Card porque el precio no coincide con ningún monto disponible (30, 35, 40, 50, 55, 75, 80€).';
   }
 
-  ['promoTreatment', 'promoDuration', 'promoPrice'].forEach((id) => {
+  // El texto de la promo y el toggle de IA también entran en el cálculo, porque de ahí
+  // sale el nombre heredado.
+  ['promoTreatment', 'promoDuration', 'promoPrice', 'promoRawText', 'promoAiCopy',
+   'promoUseAiYes', 'promoUseAiNo'].forEach((id) => {
     const el = document.getElementById(id);
     el.addEventListener('input', actualizarNotaReservable);
     el.addEventListener('change', actualizarNotaReservable);
   });
-
-  const promoAiBtn    = document.getElementById('promoAiBtn');
-  const promoAiError  = document.getElementById('promoAiError');
-  const promoAiResult = document.getElementById('promoAiResult');
-  const promoAiCopy   = document.getElementById('promoAiCopy');
 
   promoAiBtn.addEventListener('click', async () => {
     const raw = document.getElementById('promoRawText').value.trim();
@@ -1449,14 +1490,13 @@
     try {
       const token = await user.getIdToken();
       // Los datos del tratamiento se mandan como contexto para que el modelo escriba con
-      // cifras reales en vez de inventarlas.
-      const extra = promoCamposExtra();
+      // cifras reales en vez de inventarlas. Van de a uno y no todo-o-nada: el endpoint
+      // los acepta por separado, y un precio suelto ya es contexto útil.
+      const { treatmentName, duration, price } = promoCamposExtra();
       const body = { text: raw };
-      if (extra.completos) {
-        body.treatmentName = extra.treatmentName;
-        body.duration = extra.duration;
-        body.price = extra.price;
-      }
+      if (treatmentName !== '') body.treatmentName = treatmentName;
+      if (duration > 0) body.duration = duration;
+      if (price > 0) body.price = price;
       const res = await fetch('api/generate-promo-copy.php', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -1512,13 +1552,15 @@
         order: Date.now(),
         createdAt: serverTimestamp()
       };
-      // Todo o nada: con un campo suelto index.html no podría armar la <option>, así que
-      // no se guarda nada en vez de guardar un tratamiento a medias.
-      const extra = promoCamposExtra();
-      if (extra.completos) {
-        promoDoc.treatmentName = extra.treatmentName;
-        promoDoc.duration = extra.duration;
-        promoDoc.price = extra.price;
+      // Duración y precio no tienen default posible, así que siguen siendo obligatorios
+      // para que la promo sea reservable. El nombre sí: si quedó vacío se hereda el texto
+      // de la promo, para que la opción del select no pierda la palabra "oferta".
+      const { treatmentName, duration, price } = promoCamposExtra();
+      const nombreEfectivo = promoNombreEfectivo(treatmentName, useAiCopy ? aiCopy : raw);
+      if (nombreEfectivo !== '' && duration > 0 && price > 0) {
+        promoDoc.treatmentName = nombreEfectivo;
+        promoDoc.duration = duration;
+        promoDoc.price = price;
       }
       await addDoc(collection(db, 'promos'), promoDoc);
 
