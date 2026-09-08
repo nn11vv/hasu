@@ -54,8 +54,15 @@ if ($authCode !== 200 || empty($authData['users'][0])) {
 }
 
 // ---- Entrada ----
+// { text, treatmentName?, duration?, price? } — los tres últimos son opcionales y vienen
+// juntos o no vienen: el panel solo los manda cuando la promo es un tratamiento reservable.
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $text  = trim($input['text'] ?? '');
+
+$treatmentName = trim($input['treatmentName'] ?? '');
+if (mb_strlen($treatmentName) > 120) $treatmentName = mb_substr($treatmentName, 0, 120);
+$duration = isset($input['duration']) && is_numeric($input['duration']) ? (int)$input['duration'] : 0;
+$price    = isset($input['price'])    && is_numeric($input['price'])    ? (float)$input['price'] : null;
 
 if ($text === '') {
     http_response_code(400);
@@ -75,25 +82,41 @@ if (!defined('ANTHROPIC_API_KEY') || ANTHROPIC_API_KEY === '') {
 }
 
 // ---- Claude: mejorar el texto ----
+// La primera regla es la importante: sin ella el modelo "mejoraba" convirtiendo
+// "Oferta limpieza facial" en una descripción neutra del tratamiento, o sea que borraba
+// justo lo único que hacía que el texto fuera una promoción.
 $system = <<<TXT
-Sos redactor de textos breves para Hasu Masajes, un centro de masajes y bienestar en Mutxamel, Alicante.
+Sos redactor de textos breves para Hasu Masajes, un centro de quiromasaje en Mutxamel, Alicante.
 
 Recibís el texto crudo de una promoción y devolvés una versión mejorada.
 
 Reglas:
+- Si el texto original o los datos indican una oferta, promoción, descuento o precio especial, la versión mejorada TIENE que seguir leyéndose como una oferta: conservá la palabra "oferta", "promo", "descuento" o alguna equivalente explícita, y destacá ese carácter promocional. NUNCA la conviertas en una descripción neutra o genérica del tratamiento.
+- Si te paso nombre del tratamiento, duración o precio, incorporalos de forma natural en el texto.
+- No inventes precios, porcentajes de descuento, duraciones, fechas ni ningún otro dato que no esté en el texto original o en los datos que te paso. Si no sabés un dato, no lo menciones.
 - Tono cálido y profesional, cercano pero no informal de más.
 - Agregá 1 o 2 emojis relevantes solo si suman; si no quedan bien, ninguno.
 - Una sola línea, lo más corta posible (idealmente menos de 100 caracteres).
-- No inventes precios, fechas, duraciones, descuentos ni datos que no estén en el texto original.
 - Respondé únicamente con el texto mejorado, sin comillas, sin explicaciones y sin alternativas.
 TXT;
+
+// Los datos reales van en el mensaje del usuario, no en el system: son de esta promo en
+// particular. Que el modelo los tenga es lo que evita que invente cifras para rellenar.
+$userMsg = $text;
+$datos = [];
+if ($treatmentName !== '') $datos[] = 'Nombre del tratamiento: ' . $treatmentName;
+if ($duration > 0)         $datos[] = 'Duración: ' . $duration . ' minutos';
+if ($price !== null)       $datos[] = 'Precio: ' . $price . '€';
+if ($datos) {
+    $userMsg .= "\n\nDatos reales de este tratamiento (usá estos, no inventes otros):\n- " . implode("\n- ", $datos);
+}
 
 $payload = json_encode([
     'model'      => CLAUDE_MODEL,
     'max_tokens' => CLAUDE_MAX_TOKENS,
     'system'     => $system,
     'messages'   => [
-        ['role' => 'user', 'content' => $text],
+        ['role' => 'user', 'content' => $userMsg],
     ],
 ], JSON_UNESCAPED_UNICODE);
 

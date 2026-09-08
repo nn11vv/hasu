@@ -4160,6 +4160,53 @@ function promoTexto(p) {
   return (p.useAiCopy && p.aiCopy) ? p.aiCopy : (p.rawText || '');
 }
 
+// ---- Promos que además son tratamientos reservables ----
+// Duraciones escritas igual que en las <option> estáticas de arriba. Duplicado a mano en
+// admin.html (PROMO_DURACION_LABEL): no hay módulos compartidos entre los dos archivos.
+const PROMO_DURACION_LABEL = { 15: '15 min', 30: '30 min', 45: '45 min', 60: '1 hora', 75: '1h15', 90: '1h30' };
+
+// Los tres campos van juntos: sin uno no se puede armar la opción.
+function promoEsReservable(p) {
+  return typeof p.treatmentName === 'string'
+    && p.treatmentName.trim() !== ''
+    && PROMO_DURACION_LABEL[Number(p.duration)] !== undefined
+    && Number(p.price) > 0;
+}
+
+function promoTextoOpcion(p) {
+  return `${p.treatmentName.trim()} · ${PROMO_DURACION_LABEL[Number(p.duration)]} · ${Number(p.price)}€`;
+}
+
+// Agrega la <option> al final si no hay ya una con el mismo texto. La comparación va
+// contra .value porque es lo que ambos selects usan como identidad: en #inputService está
+// explícito en el atributo, y en #gcService (options sin value) el navegador devuelve el
+// propio texto. Así una promo que repita un tratamiento estático no lo duplica.
+function agregarOpcionSiFalta(select, texto, duration) {
+  if (!select) return;
+  if ([...select.options].some((o) => o.value === texto)) return;
+  const opt = document.createElement('option');
+  opt.value = texto;
+  opt.textContent = texto;
+  // data-duration es lo que lee getServiceDuration() para calcular los slots libres.
+  if (duration) opt.dataset.duration = String(duration);
+  select.appendChild(opt);
+}
+
+function inyectarPromosReservables(promos) {
+  const inputService = document.getElementById('inputService');
+  const gcService = document.getElementById('gcService');
+
+  promos.filter(promoEsReservable).forEach((p) => {
+    const texto = promoTextoOpcion(p);
+    agregarOpcionSiFalta(inputService, texto, Number(p.duration));
+    // La gift card solo existe si hay un Payment Link para ese monto exacto: el precio se
+    // extrae del texto de la opción (gcExtractPrice) y se busca en este mismo mapa.
+    if (Object.prototype.hasOwnProperty.call(STRIPE_GIFTCARD_LINKS, String(Number(p.price)))) {
+      agregarOpcionSiFalta(gcService, texto, null);
+    }
+  });
+}
+
 function promosCerradas() {
   try {
     const guardadas = JSON.parse(localStorage.getItem(PROMOS_CERRADAS_KEY));
@@ -4246,6 +4293,11 @@ async function loadPromosPublicas() {
       (b.order ?? 0) - (a.order ?? 0) ||
       ((b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
     );
+
+    // Independiente del tope de 2 de la franja: TODA promo activa con los tres campos se
+    // ofrece como turno reservable, entre en la franja o no. Va antes del return de abajo
+    // porque una promo puede ser reservable aunque no tenga texto para mostrar.
+    inyectarPromosReservables(promos);
 
     // Se descartan las que quedaron sin texto (por ej. useAiCopy con aiCopy vacío):
     // ocuparían lugar en el tope de 2 sin mostrar nada.
