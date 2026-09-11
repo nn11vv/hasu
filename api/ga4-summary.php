@@ -100,7 +100,9 @@ function ga4_fetch_batch(string $accessToken): ?array {
                     ['startDate' => '7daysAgo', 'endDate' => 'today', 'name' => 'range7'],
                     ['startDate' => '30daysAgo', 'endDate' => 'today', 'name' => 'range30'],
                 ],
-                'dimensions' => [['name' => 'dateRange']],
+                // 'dateRange' es una pseudo-dimensión que la Data API agrega sola
+                // cuando hay varios dateRanges nombrados - no se pide explícita en
+                // 'dimensions', pero igual aparece en dimensionValues[0] de cada fila.
                 'metrics'    => [['name' => 'sessions'], ['name' => 'activeUsers']],
             ],
             [
@@ -108,7 +110,10 @@ function ga4_fetch_batch(string $accessToken): ?array {
                 'dimensions' => [['name' => 'pagePath']],
                 'metrics'    => [['name' => 'screenPageViews']],
                 'orderBys'   => [['metric' => ['metricName' => 'screenPageViews'], 'desc' => true]],
-                'limit'      => 5,
+                // Pedimos margen de más filas: "/" e "/index.html" se fusionan y
+                // "/hasu/" se excluye en ga4_parse_batch, así que 5 no alcanzaría
+                // siempre para devolver 5 finales.
+                'limit'      => 8,
             ],
             [
                 'dateRanges' => [['startDate' => '30daysAgo', 'endDate' => 'today']],
@@ -172,12 +177,22 @@ function ga4_parse_batch(array $batch): array {
         }
     }
 
+    // "/" y "/index.html" son la misma home vista de dos formas -> se fusionan.
+    // "/hasu/" es ruido y se descarta directamente.
     $r1 = $reports[1] ?? null;
+    $pageViews = [];
     foreach (($r1['rows'] ?? []) as $row) {
-        $result['topPages'][] = [
-            'path'  => $row['dimensionValues'][0]['value'] ?? '',
-            'views' => (int)($row['metricValues'][0]['value'] ?? 0),
-        ];
+        $path  = $row['dimensionValues'][0]['value'] ?? '';
+        $views = (int)($row['metricValues'][0]['value'] ?? 0);
+
+        if ($path === '/hasu/') continue;
+        if ($path === '/index.html') $path = '/';
+
+        $pageViews[$path] = ($pageViews[$path] ?? 0) + $views;
+    }
+    arsort($pageViews);
+    foreach (array_slice($pageViews, 0, 5, true) as $path => $views) {
+        $result['topPages'][] = ['path' => $path, 'views' => $views];
     }
 
     $r2 = $reports[2] ?? null;
@@ -188,6 +203,14 @@ function ga4_parse_batch(array $batch): array {
             $result['events'][$name] = $count;
         }
     }
+
+    $conversions30 = $result['events']['reserva_completada']
+        + $result['events']['giftcard_comprada']
+        + $result['events']['bono_comprado'];
+    $result['conversions30'] = $conversions30;
+    $result['conversionRate30'] = $result['sessions30'] > 0
+        ? round(($conversions30 / $result['sessions30']) * 100, 1)
+        : 0;
 
     return $result;
 }

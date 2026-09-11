@@ -921,13 +921,14 @@
       const data = await res.json();
 
       const statsHtml = `
-        <div class="bono-result-row"><span>Sesiones (7 días)</span><span>${data.sessions7 ?? 0}</span></div>
-        <div class="bono-result-row"><span>Usuarios activos (7 días)</span><span>${data.users7 ?? 0}</span></div>
-        <div class="bono-result-row"><span>Sesiones (30 días)</span><span>${data.sessions30 ?? 0}</span></div>
-        <div class="bono-result-row"><span>Usuarios activos (30 días)</span><span>${data.users30 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Visitas al sitio (7 días)</span><span>${data.sessions7 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Personas distintas que visitaron (7 días)</span><span>${data.users7 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Visitas al sitio (30 días)</span><span>${data.sessions30 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Personas distintas que visitaron (30 días)</span><span>${data.users30 ?? 0}</span></div>
         <div class="bono-result-row"><span>Reservas completadas (30d)</span><span>${data.events?.reserva_completada ?? 0}</span></div>
         <div class="bono-result-row"><span>Gift cards compradas (30d)</span><span>${data.events?.giftcard_comprada ?? 0}</span></div>
         <div class="bono-result-row"><span>Bonos comprados (30d)</span><span>${data.events?.bono_comprado ?? 0}</span></div>
+        <div class="bono-result-row"><span>De cada visita, ¿cuántas terminan en reserva o compra? (30d)</span><span>${data.conversionRate30 ?? 0}% (${data.conversions30 ?? 0} de ${data.sessions30 ?? 0} visitas)</span></div>
       `;
 
       let pagesHtml = '<p class="empty-note">Sin datos de páginas.</p>';
