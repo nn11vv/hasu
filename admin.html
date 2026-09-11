@@ -453,6 +453,11 @@
   </div>
 
   <div class="card">
+    <h2>Analytics</h2>
+    <div id="ga4SummaryWrap"><p class="loading-note">Cargando…</p></div>
+  </div>
+
+  <div class="card">
     <h2>Buscar bono</h2>
     <div class="search-row">
       <input class="form-input" id="searchCode" placeholder="HASU-BONO-XXXX">
@@ -673,6 +678,7 @@
       loadConfirmedReservas();
       loadStripeSummary(user);
       loadMonthSummary();
+      loadGa4Summary(user);
       loadPromos();
     } else {
       loginScreen.style.display = 'block';
@@ -899,6 +905,49 @@
       wrap.innerHTML = summaryHtml + listHtml;
     } catch (err) {
       wrap.innerHTML = '<p class="empty-note">No se pudo cargar el resumen de pagos.</p>';
+    }
+  }
+
+  // ===== ANALYTICS (GA4) =====
+  async function loadGa4Summary(user) {
+    const wrap = document.getElementById('ga4SummaryWrap');
+    wrap.innerHTML = '<p class="loading-note">Cargando…</p>';
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('api/ga4-summary.php', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+
+      const statsHtml = `
+        <div class="bono-result-row"><span>Sesiones (7 días)</span><span>${data.sessions7 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Usuarios activos (7 días)</span><span>${data.users7 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Sesiones (30 días)</span><span>${data.sessions30 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Usuarios activos (30 días)</span><span>${data.users30 ?? 0}</span></div>
+        <div class="bono-result-row"><span>Reservas completadas (30d)</span><span>${data.events?.reserva_completada ?? 0}</span></div>
+        <div class="bono-result-row"><span>Gift cards compradas (30d)</span><span>${data.events?.giftcard_comprada ?? 0}</span></div>
+        <div class="bono-result-row"><span>Bonos comprados (30d)</span><span>${data.events?.bono_comprado ?? 0}</span></div>
+      `;
+
+      let pagesHtml = '<p class="empty-note">Sin datos de páginas.</p>';
+      if (Array.isArray(data.topPages) && data.topPages.length > 0) {
+        const items = data.topPages.map((p) => `
+          <li>
+            <span class="sl-desc">${escapeHtml(p.path) || '—'}</span>
+            <span class="sl-amount">${p.views}</span>
+          </li>
+        `).join('');
+        pagesHtml = `<p class="stripe-summary" style="margin-bottom:0.4rem;">Top páginas (30 días)</p><ul class="stripe-list">${items}</ul>`;
+      }
+
+      const staleHtml = data.stale
+        ? '<p class="mismatch-note">Datos de hace un rato (no se pudo actualizar en vivo).</p>'
+        : '';
+
+      wrap.innerHTML = statsHtml + pagesHtml + staleHtml;
+    } catch (err) {
+      wrap.innerHTML = '<p class="empty-note">No se pudo cargar Analytics.</p>';
     }
   }
 
